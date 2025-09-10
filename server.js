@@ -2,12 +2,23 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const axios = require('axios');
+const path = require('path');
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from 'public' folder
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Default route → welcome.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'welcome.html'));
+});
+
+// College context for AI
 const collegeContext = {
   role: "system",
   content: `You are UniTalk, a helpful AI assistant for Universal College of Engineering and Technology (UCET), Guntur.
@@ -174,6 +185,7 @@ MISSION:
 Always answer student queries based on this information. If not found, say: "Sorry, I don't have that information yet."`
 };
 
+// Chat endpoint
 app.post('/chat', async (req, res) => {
   try {
     const { messages, model } = req.body;
@@ -203,5 +215,6 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-const PORT = 5000;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+// Dynamic port for Render deployment
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
