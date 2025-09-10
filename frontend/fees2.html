@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Smart Fee Management & WhatsApp Notifications</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Firebase compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- Razorpay -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- QRious (for QR codes) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f9fd;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    header {
+      background: #384fe8;
+      color: white;
+      width: 100%;
+      padding: 20px 0;
+      font-size: 2rem;
+      text-align: center;
+    }
+    main {
+      width: 100%;
+      max-width: 430px;
+      padding: 20px;
+      flex: 1;
+    }
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px #aadcff77;
+      margin-bottom: 30px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 6px;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px 10px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      border: 1px solid #bad1fd;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    button {
+      background: #384fe8;
+      color: white;
+      border: none;
+      border-radius: 7px;
+      padding: 10px 15px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+      width: 100%;
+    }
+    button:hover {
+      background: #2c3bdc;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 0.95rem;
+    }
+    th, td {
+      border: 1px solid #aadcffbb;
+      padding: 8px 6px;
+      text-align: center;
+    }
+    th {
+      background: #eaf2ff;
+    }
+    tr.pending {
+      background: #fff2e6;
+    }
+    tr.paid {
+      background: #eaffea;
+    }
+    .notify {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 6px;
+      background: #ffe8d3;
+      color: #ce8921;
+      border: 1px solid #ffd8a4;
+      font-weight: bold;
+      text-align: center;
+    }
+    .small {
+      font-size: 0.85rem;
+      color: #555;
+    }
+    .receipt {
+      border: 1.5px dashed #384fe8;
+      background: #f8fbff;
+      border-radius: 7px;
+      padding: 1rem;
+      margin-bottom: 20px;
+      font-size: 1rem;
+    }
+    .qrdiv {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>Uconnect  Fee Management </header>
+  <main>
+    <div class="card" id="loginCard">
+      <form id="loginForm" autocomplete="off">
+        <label for="studentIdInput">Student ID</label>
+        <input type="text" id="studentIdInput" placeholder="Enter Student ID" required />
+        <button type="submit">Fetch Student & Dues</button>
+      </form>
+      <div id="loginError" style="color:#db2c6f; display:none; margin-top:10px;"></div>
+    </div>
+
+    <div class="card" id="feeCard" style="display:none;">
+      <div id="studentInfo"></div>
+      <form id="feeForm" autocomplete="off" style="margin-top:20px;">
+        <label for="feeTypeSelect">Select Due to Pay</label>
+        <select id="feeTypeSelect" required>
+          <option value="">-- Select Fee Type / Year --</option>
+        </select>
+
+        <label for="academicYearInput">Academic Year / Semester</label>
+        <input type="text" id="academicYearInput" readonly />
+
+        <label for="amountInput">Amount to Pay (₹)</label>
+        <input type="number" id="amountInput" min="1" required />
+
+        <button type="submit">Pay with Razorpay</button>
+      </form>
+      <button style="background:#e3e3e7;color:#333;margin-top:15px;" onclick="logout()">Back to Login</button>
+      <div id="notificationArea" class="notify" style="display:none;"></div>
+    </div>
+
+    <div class="card" id="receiptCard" style="display:none;">
+      <div class="receipt" id="receiptView"></div>
+      <div class="qrdiv"><canvas id="qrCode"></canvas></div>
+      <button onclick="downloadReceipt()">Download Receipt PDF</button>
+      <button style="background:#e3e3e7;color:#333;margin-top:15px;" onclick="window.location.reload()">New Payment</button>
+    </div>
+   <div class="card" id="verifyCard" style="max-width: 450px; margin: 20px auto; padding: 20px;">
+  <form id="verifyForm" autocomplete="off" style="margin-bottom: 16px;">
+    <label for="verifyReceiptId" style="font-weight: 600;">
+      Verify Receipt
+    </label>
+    <input 
+      type="text" 
+      id="verifyReceiptId" 
+      placeholder="Enter Receipt ID" 
+      required
+      style="width: 100%; padding: 10px; font-size: 1rem; border: 1.5px solid #384fe8; border-radius: 6px;"
+    />
+    <button type="submit" style="margin-top: 12px;">Verify</button>
+  </form>
+
+  <div id="verifyResult" style="display:none; font-size: 1rem;">
+    <!-- Receipt data appears here -->
+  </div>
+  <button id="downloadReceiptBtn" style="display:none; margin-top:14px;">Download Receipt PDF</button>
+  <div class="qrdiv"><canvas id="qrVerify" style="display:none;"></canvas></div>
+</div>
+
+
+  </main>
+
+  <script>
+    // Replace with your Firebase config
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBjiKldk4Q-J8dEbhBd6FTGyPb-TQoGadE",
+  authDomain: "st-fees.firebaseapp.com",
+  projectId: "st-fees",
+  storageBucket: "st-fees.firebasestorage.app",
+  messagingSenderId: "865723388538",
+  appId: "1:865723388538:web:e49e6bde9ff7023aae61c3",
+  measurementId: "G-Y9WQXHKTX4"
+};
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    // Make sure Firebase is initialized and Firestore db is accessible as `db`
+
+const verifyForm = document.getElementById("verifyForm");
+const verifyReceiptIdInput = document.getElementById("verifyReceiptId");
+const verifyResult = document.getElementById("verifyResult");
+
+verifyForm.onsubmit = async function (event) {
+  event.preventDefault();
+
+  const receiptId = verifyReceiptIdInput.value.trim();
+  verifyResult.style.display = "none";
+  verifyResult.innerHTML = "";
+
+  if (!receiptId) {
+    alert("Please enter a Receipt ID.");
+    return;
+  }
+
+  try {
+    // Fetch receipt document from Firestore
+    const docRef = db.collection("receipts").doc(receiptId);
+    const docSnap = await docRef.get();
+
+    if (!docSnap.exists) {
+      verifyResult.style.color = "red";
+      verifyResult.innerHTML = "❌ Receipt not found or invalid Receipt ID.";
+      verifyResult.style.display = "block";
+      return;
+    }
+
+    const data = docSnap.data();
+    
+    // Display receipt info - customize fields as needed
+    verifyResult.style.color = "black";
+    verifyResult.style.display = "block";
+    verifyResult.innerHTML = `
+      <h3 style="color:#384fe8; margin-bottom: 12px;">✅ Receipt Verified</h3>
+      <b>Receipt ID:</b> ${receiptId} <br/>
+      <b>Student Name:</b> ${data.studentName || "-"} <br/>
+      <b>Student ID:</b> ${data.studentId || "-"} <br/>
+      <b>Course:</b> ${data.course || "-"} <br/>
+      <b>Semester:</b> ${data.semester || "-"} <br/>
+      <b>Fee Type:</b> ${data.feeType || "-"} <br/>
+      <b>Academic Year:</b> ${data.academicYear || "-"} <br/>
+      <b>Amount Paid:</b> ₹${data.amount || "-"} <br/>
+      <b>Payment Date:</b> ${data.date || "-"} <br/>
+      <b>Razorpay Payment ID:</b> ${data.razorpayPaymentId || "-"} 
+    `;
+  } catch (error) {
+    verifyResult.style.color = "red";
+    verifyResult.style.display = "block";
+    verifyResult.innerHTML = "⚠️ Error fetching receipt: " + error.message;
+  }
+};
+
+
+    // Elements
+    const loginForm = document.getElementById("loginForm");
+    const studentIdInput = document.getElementById("studentIdInput");
+    const loginError = document.getElementById("loginError");
+    const loginCard = document.getElementById("loginCard");
+
+    const feeCard = document.getElementById("feeCard");
+    const studentInfo = document.getElementById("studentInfo");
+    const feeForm = document.getElementById("feeForm");
+    const feeTypeSelect = document.getElementById("feeTypeSelect");
+    const academicYearInput = document.getElementById("academicYearInput");
+    const amountInput = document.getElementById("amountInput");
+    const notificationArea = document.getElementById("notificationArea");
+
+    const receiptCard = document.getElementById("receiptCard");
+    const receiptView = document.getElementById("receiptView");
+    const qrCodeCanvas = document.getElementById("qrCode");
+
+    let studentData = null;
+    let paymentData = null;
+    let lastReceiptId = null;
+    let availableDues = [];
+
+    // Handle login form submission - fetch student and dues
+    loginForm.onsubmit = async (e) => {
+      e.preventDefault();
+      loginError.style.display = "none";
+      notificationArea.style.display = "none";
+      const sid = studentIdInput.value.trim();
+      if (!sid) return;
+
+      try {
+        const studentDoc = await db.collection("students").doc(sid).get();
+        if (!studentDoc.exists) {
+          loginError.textContent = "Student ID not found.";
+          loginError.style.display = "block";
+          return;
+        }
+        studentData = { id: sid, ...studentDoc.data() };
+
+        const duesDoc = await db.collection("dues").doc(sid).get();
+        let duesList = duesDoc.exists ? duesDoc.data().duesList || [] : [];
+
+        // Build dues table HTML and select options, track pending dues for notification
+        let pendingExists = false;
+        let duesTable = `
+          <table>
+            <tr>
+              <th>Fee Type</th>
+              <th>Academic Year</th>
+              <th>Total (₹)</th>
+              <th>Paid (₹)</th>
+              <th>Remaining (₹)</th>
+              <th>Status</th>
+            </tr>`;
+
+        availableDues = [];
+        let optionsHTML = `<option value="">-- Select Fee Type / Year --</option>`;
+
+        duesList.forEach(due => {
+          const amount = due.amount || 0;
+          const paid = due.amountPaid || 0;
+          const remaining = due.remaining !== undefined ? due.remaining : amount - paid;
+          const status =
+            due.status ||
+            (remaining === 0 ? "paid" : paid > 0 ? "partial" : "unpaid");
+
+          const rowClass = status === "paid" ? "paid" : "pending";
+          duesTable += `<tr class="${rowClass}">
+                          <td>${due.feeType}</td>
+                          <td>${due.academicYear || ''}</td>
+                          <td>${amount}</td>
+                          <td>${paid}</td>
+                          <td>${remaining}</td>
+                          <td>${status.toUpperCase()}</td>
+                        </tr>`;
+
+          if (status !== "paid") {
+            pendingExists = true;
+            availableDues.push(due);
+            optionsHTML += `<option value="${due.feeType}||${due.academicYear}">${due.feeType} (${due.academicYear}) - ₹${remaining}</option>`;
+          }
+        });
+
+        duesTable += "</table>";
+
+        // Update UI
+        studentInfo.innerHTML = `
+          <b>Name:</b> ${studentData.name || '-'}<br>
+          <b>Course:</b> ${studentData.course || studentData.branch || '-'}<br>
+          <b>Semester:</b> ${studentData.semester || studentData.year || '-'}<br>
+          <span class="small">ID: ${sid}</span>
+          ${duesTable}
+        `;
+        feeTypeSelect.innerHTML = optionsHTML;
+        academicYearInput.value = "";
+        amountInput.value = "";
+
+        if (pendingExists) {
+          notificationArea.style.display = "block";
+          notificationArea.textContent = "You have pending dues. WhatsApp reminders will be sent.";
+          // TODO: Optionally trigger WhatsApp reminder here via your backend API
+        } else {
+          notificationArea.style.display = "none";
+        }
+
+        loginCard.style.display = "none";
+        feeCard.style.display = "block";
+        receiptCard.style.display = "none";
+
+      } catch (err) {
+        loginError.textContent = "Error fetching data: " + err.message;
+        loginError.style.display = "block";
+      }
+    };
+
+    // Update form fields on fee type select change
+    feeTypeSelect.onchange = function () {
+      const val = this.value;
+      if (!val) {
+        academicYearInput.value = "";
+        amountInput.value = "";
+        return;
+      }
+      const [feeType, academicYear] = val.split("||");
+      const due = availableDues.find(d =>
+        d.feeType === feeType && d.academicYear === academicYear
+      );
+      academicYearInput.value = due.academicYear || '';
+      amountInput.value = due.remaining || (due.amount - (due.amountPaid || 0)) || '';
+    };
+
+    // Handle fee payment form submit
+    feeForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const selected = feeTypeSelect.value;
+      if (!selected) {
+        alert("Please select a fee type to pay.");
+        return;
+      }
+      const [feeType, academicYear] = selected.split("||");
+      const amountToPay = parseInt(amountInput.value, 10);
+      if (!amountToPay || amountToPay < 1) {
+        alert("Enter a valid amount to pay.");
+        return;
+      }
+
+      // Find due object
+      const currentDue = availableDues.find(d =>
+        d.feeType === feeType && d.academicYear === academicYear
+      );
+
+      if (!currentDue) {
+        alert("Selected due not found.");
+        return;
+      }
+
+      // Open Razorpay payment modal
+      const options = {
+        key: "rzp_test_EGuAJzmrfCBoB3", // <-- Replace with your Razorpay test key ID here!
+        amount: amountToPay * 100, // in paise
+        currency: "INR",
+        name: "Smart Student Fee Payment",
+        description: `Payment for ${feeType} (${academicYear})`,
+        handler: async function (response) {
+          // On payment success:
+          const paymentId = response.razorpay_payment_id;
+
+          // Save receipt in Firestore
+          const receiptData = {
+            studentId: studentData.id,
+            studentName: studentData.name,
+            course: studentData.course || studentData.branch,
+            semester: studentData.semester || studentData.year || '',
+            feeType,
+            academicYear,
+            amount: amountToPay,
+            date: new Date().toLocaleString(),
+            razorpayPaymentId: paymentId
+          };
+          const docRef = await db.collection("receipts").add(receiptData);
+          lastReceiptId = docRef.id;
+          receiptData.receiptId = lastReceiptId;
+          paymentData = receiptData;
+
+          // Update dues in Firestore
+          const dueRef = db.collection("dues").doc(studentData.id);
+          const dueDoc = await dueRef.get();
+          if (dueDoc.exists) {
+            const dues = dueDoc.data().duesList || [];
+            const updatedDues = dues.map(due => {
+              if (due.feeType === feeType && due.academicYear === academicYear) {
+                const prevPaid = due.amountPaid || 0;
+                const newPaid = prevPaid + amountToPay;
+                const remaining = Math.max((due.amount || 0) - newPaid, 0);
+                const status = remaining === 0 ? "paid" : newPaid === 0 ? "unpaid" : "partial";
+                return {
+                  ...due,
+                  amountPaid: newPaid,
+                  remaining: remaining,
+                  status: status
+                };
+              }
+              return due;
+            });
+            await dueRef.update({ duesList: updatedDues });
+          }
+
+          // === SEND WhatsApp Notification to Student: ===
+          // IMPORTANT: You must have a backend server API that will handle sending WhatsApp messages.
+          // Replace 'YOUR_BACKEND_WHATSAPP_API_URL' with your real endpoint.
+          // Also include student phone number in your student records or pass it here.
+          
+          /*
+          try {
+            await fetch('YOUR_BACKEND_WHATSAPP_API_URL/send_receipt', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                studentId: studentData.id,
+                receipt: receiptData,
+                phone: studentData.phone || '' // student phone number here
+              })
+            });
+          } catch (err) {
+            console.warn("Failed to send WhatsApp receipt notification:", err);
+          }
+          */
+          
+          renderReceipt(receiptData);
+          loginCard.style.display = "none";
+          feeCard.style.display = "none";
+          notificationArea.style.display = "none";
+          receiptCard.style.display = "block";
+        },
+        prefill: { name: studentData.name || "" },
+        theme: { color: "#384fe8" }
+      };
+      const rzp = new Razorpay(options);
+      rzp.open();
+    };
+
+    // Render receipt details + QR code
+    function renderReceipt(data) {
+      receiptView.innerHTML = `
+        <b>Receipt ID:</b> ${data.receiptId}<br>
+        <b>Name:</b> ${data.studentName}<br>
+        <b>ID:</b> ${data.studentId}<br>
+        <b>Fee Type:</b> ${data.feeType}<br>
+        <b>Academic Year:</b> ${data.academicYear}<br>
+        <b>Amount Paid:</b> ₹${data.amount}<br>
+        <b>Date:</b> ${data.date}<br>
+        <b>Razorpay Payment ID:</b> <span class="small">${data.razorpayPaymentId}</span>
+      `;
+      if (window.QRious && qrCodeCanvas) {
+        const url = `${window.location.origin}${window.location.pathname}?verify=${data.receiptId}`;
+        new QRious({
+          element: qrCodeCanvas,
+          value: url,
+          size: 120
+        });
+      }
+    }
+
+    // Download the receipt as PDF
+    window.downloadReceipt = function () {
+      if (!paymentData) return alert("No receipt to download.");
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("Payment Receipt", 12, 20);
+      doc.setFontSize(12);
+      let y = 35;
+      const lines = [
+        ["Receipt ID", paymentData.receiptId],
+        ["Name", paymentData.studentName],
+        ["Student ID", paymentData.studentId],
+        ["Fee Type", paymentData.feeType],
+        ["Academic Year", paymentData.academicYear],
+        ["Amount Paid", `₹${paymentData.amount}`],
+        ["Payment Date", paymentData.date],
+        ["Razorpay Payment ID", paymentData.razorpayPaymentId]
+      ];
+      for (const [label, value] of lines) {
+        doc.text(`${label}: ${value}`, 12, y);
+        y += 9;
+      }
+      if (qrCodeCanvas && qrCodeCanvas.toDataURL) {
+        doc.addImage(qrCodeCanvas.toDataURL(), "PNG", 140, 24, 50, 50);
+      }
+      doc.save(`Receipt_${paymentData.receiptId}.pdf`);
+    };
+
+    // Logout handler
+    function logout() {
+      studentData = null;
+      paymentData = null;
+      lastReceiptId = null;
+      availableDues = [];
+      studentIdInput.value = "";
+      notificationArea.style.display = "none";
+      loginError.style.display = "none";
+
+      loginCard.style.display = "block";
+      feeCard.style.display = "none";
+      receiptCard.style.display = "none";
+      studentInfo.innerHTML = "";
+      feeTypeSelect.innerHTML = `<option value="">-- Select Fee Type / Year --</option>`;
+      academicYearInput.value = "";
+      amountInput.value = "";
+    }
+    window.logout = logout;
+
+    // On page load, parse URL verify param for receipt verification (optional)
+    window.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("verify")) {
+        const rid = params.get("verify");
+        alert(`Receipt verification page requested for: ${rid}\n\n(You can add receipt verification logic here.)`);
+      }
+    });
+  </script>
+</body>
+</html>

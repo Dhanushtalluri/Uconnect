@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>U connect - Accounts Management</title>
+  <style>
+    body {
+      background: #f6fbff;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      color: #262b3f;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      background: #0074d9;
+      color: #fff;
+      padding: 15px 30px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    .logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #fff;
+      margin-right: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0074d9;
+      font-size: 1.6em;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-weight:800;
+    }
+    h1 {
+      font-size: 2em;
+      letter-spacing: 1px;
+      margin: 0;
+      user-select: none;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 36px auto;
+      background: #fff;
+      border-radius: 15px;
+      padding: 2rem 2.5rem;
+      box-shadow: 0 6px 32px 0 rgba(25,100,168,0.06);
+    }
+    .section-title {
+      color: #0074d9;
+      font-size: 1.3em;
+      margin-bottom: 5px;
+    }
+    .row {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 36px;
+      flex-wrap: wrap;
+    }
+    .panel {
+      flex: 1;
+      min-width: 310px;
+      background: #f0f7ff;
+      border-radius: 8px;
+      padding: 20px 18px 14px 18px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 6px rgba(0,30,90,0.03);
+    }
+    label {
+      display: block;
+      font-size: 1em;
+      margin: 11px 0 4px 0;
+      color: #0074d9;
+    }
+    input[type=text], input[type=number] {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid #bdd7fb;
+      border-radius: 5px;
+      font-size: 1em;
+      box-sizing: border-box;
+      background: #fff;
+    }
+    button {
+      background: #0074d9;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 18px;
+      cursor: pointer;
+      font-size: 1em;
+      margin: 12px 0 0 0;
+      transition: background 0.18s;
+    }
+    button:hover {
+      background: #0258a7;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      background: #f6fbff;
+    }
+    th, td {
+      padding: 9px 12px;
+      text-align: left;
+      border-bottom: 1px solid #e0eaff;
+    }
+    th {
+      background: #ebf3fa;
+      color: #262b3f;
+      font-weight: bold;
+    }
+    .actions button {
+      background: #e74c3c;
+      color: #fff;
+      font-size: 0.96em;
+      padding: 3px 9px;
+      border-radius: 4px;
+      margin-left: 2px;
+    }
+    .actions button.edit {
+      background: #20c997;
+      margin-right: 5px;
+    }
+    .status-paid {
+      color: #20c997;
+      font-weight: bold;
+    }
+    .status-partial {
+      color: #ef9f00;
+      font-weight: bold;
+    }
+    .status-unpaid {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+    @media (max-width: 950px) {
+      .row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">U</div>
+    <h1>U connect – Accounts Manager</h1>
+  </header>
+  <div class="container">
+    <div class="section-title">Admin Actions</div>
+    <div class="row">
+      <div class="panel">
+        <div style="font-weight:bold;margin-bottom:8px;">Add / Remove Student</div>
+        <label>Roll No:</label>
+        <input id="rollInput" type="text" placeholder="Eg: 23607-cm-003" />
+        <label>Student Name:</label>
+        <input id="nameInput" type="text" placeholder="Eg: B.Jithedra" />
+        <label>Course:</label>
+        <input id="courseInput" type="text" placeholder="Eg: DCME" />
+        <label>Year:</label>
+        <input id="yearInput" type="text" placeholder="Eg: 3rd year(1 sem)" />
+        <button onclick="addStudent()">Add Student</button>
+        <button onclick="removeStudent()" style="background:#e74c3c;margin-left:8px;">Remove Student</button>
+      </div>
+      <div class="panel">
+        <div style="font-weight:bold;margin-bottom:8px;">Allocate / Update Fees</div>
+        <label for="rollFeeInput">Student Roll No:</label>
+        <input id="rollFeeInput" type="text" placeholder="Eg: 23607-cm-003" />
+        <label for="typeInput">Fee Type:</label>
+        <input id="typeInput" type="text" placeholder="Eg: Tution" />
+        <label for="amountInput">Total Fee Amount:</label>
+        <input id="amountInput" type="number" placeholder="Eg: 25000" />
+        <label for="paidInput">Amount Paid:</label>
+        <input id="paidInput" type="number" placeholder="Eg: 10000" />
+        <button onclick="allocateFee()">Allocate Fee</button>
+      </div>
+    </div>
+    <div class="section-title">Students & Dues Overview</div>
+    <div id="studentTableWrap"></div>
+  </div>
+
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore.js"></script>
+
+  <script>
+    // Paste your Firebase config object here, replace all placeholder strings with your actual project values 
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBjiKldk4Q-J8dEbhBd6FTGyPb-TQoGadE",
+  authDomain: "st-fees.firebaseapp.com",
+  projectId: "st-fees",
+  storageBucket: "st-fees.firebasestorage.app",
+  messagingSenderId: "865723388538",
+  appId: "1:865723388538:web:e49e6bde9ff7023aae61c3",
+  measurementId: "G-Y9WQXHKTX4"
+};
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // In-memory simulation of DB (replace with Firestore calls)
+    let students = {};
+
+    // Load initial student data from Firestore on start
+    async function loadStudents() {
+      students = {};
+      const snapshot = await db.collection('students').get();
+      snapshot.forEach(doc => {
+        students[doc.id] = doc.data();
+      });
+      renderTable();
+    }
+
+    // RENDER TABLE
+    function renderTable() {
+      let html = `<table>
+      <tr>
+        <th>Roll No</th>
+        <th>Name</th>
+        <th>Course</th>
+        <th>Year</th>
+        <th>Dues Details</th>
+        <th>Actions</th>
+      </tr>`;
+      for (const [roll, stu] of Object.entries(students)) {
+        html += `<tr>
+          <td>${roll}</td>
+          <td>${stu.name}</td>
+          <td>${stu.course}</td>
+          <td>${stu.year}</td>
+          <td>
+            <table style="background:#fff;width:100%;margin:0;">
+              <tr>
+                <th>Type</th><th>Year</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th>
+              </tr>
+              ${stu.dues && stu.dues.length ? stu.dues.map(due => `
+                <tr>
+                  <td>${due.feeType}</td>
+                  <td>${due.academicYear}</td>
+                  <td>${due.amount}</td>
+                  <td>${due.amountPaid}</td>
+                  <td>${due.remaining}</td>
+                  <td class="status-${due.status.replace('paid','paid').replace('partial','partial').replace('unpaid','unpaid')}">${due.status}</td>
+                </tr>
+              `).join('') : '<tr><td colspan="6" style="color:#c0c0c0">No dues</td></tr>'}
+            </table>
+          </td>
+          <td class="actions">
+            <button class="edit" onclick="editStudent('${roll}')">Edit</button>
+            <button onclick="removeStudent('${roll}')">Delete</button>
+          </td>
+        </tr>`;
+      }
+      html += `</table>`;
+      document.getElementById('studentTableWrap').innerHTML = html;
+    }
+
+    // ADD STUDENT
+    async function addStudent() {
+      const roll = document.getElementById('rollInput').value.trim();
+      const name = document.getElementById('nameInput').value.trim();
+      const course = document.getElementById('courseInput').value.trim();
+      const year = document.getElementById('yearInput').value.trim();
+      if(!roll || !name || !course || !year) {
+        alert('Please fill all fields.');
+        return;
+      }
+      if(students[roll]) {
+        alert('Roll number already exists.');
+        return;
+      }
+      const newStudent = { name, course, year, dues: [] };
+      try {
+        await db.collection("students").doc(roll).set(newStudent);
+        students[roll] = newStudent;
+        renderTable();
+        clearInputs();
+      } catch(err) {
+        alert('Error adding student: ' + err.message);
+      }
+    }
+
+    // REMOVE STUDENT
+    async function removeStudent(rollNo) {
+      let roll = rollNo || document.getElementById('rollInput').value.trim();
+      if(!roll || !students[roll]) {
+        alert('Roll number not found.');
+        return;
+      }
+      if(confirm(`Remove student ${roll}?`)){
+        try {
+          await db.collection("students").doc(roll).delete();
+          delete students[roll];
+          renderTable();
+        } catch(err) {
+          alert('Error removing student: ' + err.message);
+        }
+      }
+    }
+
+    // ALLOCATE/EDIT FEE
+    async function allocateFee() {
+      const roll = document.getElementById('rollFeeInput').value.trim();
+      const feeType = document.getElementById('typeInput').value.trim();
+      const amount = +document.getElementById('amountInput').value;
+      const paid = +document.getElementById('paidInput').value;
+      if(!roll || !feeType || !amount || isNaN(amount) || paid < 0) {
+        alert('Please fill all fields and enter valid fee values.');
+        return;
+      }
+      if(!students[roll]) {
+        alert('Student not found. Add student first.');
+        return;
+      }
+      const duesList = students[roll].dues || [];
+      const existingDueIndex = duesList.findIndex(d => d.feeType === feeType);
+      let remaining = amount - paid;
+      let status = "unpaid";
+      if(remaining === 0) status = "paid";
+      else if (paid > 0 && remaining > 0) status = "partial";
+
+      const newDue = {
+        academicYear: "2025/1",
+        feeType,
+        amount,
+        amountPaid: paid,
+        remaining,
+        status
+      };
+
+      if(existingDueIndex >= 0){
+        duesList[existingDueIndex] = newDue;
+      } else {
+        duesList.push(newDue);
+      }
+
+      try {
+        await db.collection("students").doc(roll).update({ dues: duesList });
+        students[roll].dues = duesList;
+        renderTable();
+        clearFeeInputs();
+      } catch(err) {
+        alert('Error updating fee: ' + err.message);
+      }
+    }
+
+    // EDIT STUDENT FIELDS (fill form for quick editing)
+    function editStudent(roll) {
+      let stu = students[roll];
+      document.getElementById('rollInput').value = roll;
+      document.getElementById('nameInput').value = stu.name;
+      document.getElementById('courseInput').value = stu.course;
+      document.getElementById('yearInput').value = stu.year;
+    }
+
+    function clearInputs() {
+      document.getElementById('rollInput').value = "";
+      document.getElementById('nameInput').value = "";
+      document.getElementById('courseInput').value = "";
+      document.getElementById('yearInput').value = "";
+    }
+    function clearFeeInputs() {
+      document.getElementById('rollFeeInput').value = "";
+      document.getElementById('typeInput').value = "";
+      document.getElementById('amountInput').value = "";
+      document.getElementById('paidInput').value = "";
+    }
+
+    // Load students from Firestore on page load
+    loadStudents();
+  </script>
+</body>
+</html>

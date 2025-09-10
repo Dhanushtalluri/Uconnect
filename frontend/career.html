@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Career Roadmap Explorer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-indigo-100 to-purple-200 min-h-screen p-6 font-sans">
+  <div class="max-w-6xl mx-auto">
+    <h1 class="text-4xl font-bold mb-6 text-center text-purple-800">Career Roadmap Explorer</h1>
+     <a href="/" class="text-sm text-purple-600 dark:text-purple-300 font-semibold hover:underline">Home</a>
+
+    <!-- Filters -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+      <input type="text" id="searchInput" placeholder="Search career roles..." class="w-full px-4 py-2 border rounded shadow-sm" oninput="filterCareers()"/>
+      <select id="categoryFilter" class="w-full sm:w-64 px-4 py-2 border rounded shadow-sm" onchange="filterCareers()">
+        <option value="">All Categories</option>
+        <option value="Software">Software</option>
+        <option value="Govt Jobs">Govt Jobs</option>
+        <option value="Design">Design</option>
+        <option value="Core Engineering">Core Engineering</option>
+        <option value="Content Creation">Content Creation</option>
+        <option value="Video Editing">Video Editing</option>
+        <option value="Marketing">Marketing</option>
+      </select>
+    </div>
+
+    <!-- Cards -->
+    <div id="careerContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+  </div>
+
+  <!-- Modal -->
+  <div id="roadmapModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto relative" role="dialog" aria-modal="true">
+      <div class="flex justify-between items-center mb-4">
+        <h2 id="modalTitle" class="text-xl font-bold text-purple-700"></h2>
+        <button onclick="closeModal()" class="text-gray-500 hover:text-red-500 text-2xl font-bold">✕</button>
+      </div>
+      <p id="modalSalary" class="text-sm text-gray-700 mb-4"></p>
+      <ul id="modalSteps" class="list-disc list-inside space-y-2 text-gray-800"></ul>
+      <h3 class="mt-4 font-semibold text-purple-700">Resources:</h3>
+      <ul id="modalLinks" class="list-disc list-inside space-y-2 text-blue-600"></ul>
+    </div>
+  </div>
+
+  <script>
+    const careers = [
+      {
+        title: "Software Engineer",
+        salary: "₹6L - ₹30L/year (India)",
+        steps: [ "🎓 HOW TO BECOME A SOFTWARE ENGINEER",
+  "",
+  "🧠 What is a Software Engineer?",
+  "A Software Engineer applies engineering principles to design, develop, test, and maintain software systems. They can work in web development, app development, AI/ML, embedded systems, etc.",
+  "",
+  "🎓 Eligibility",
+  "- B.Tech/B.E. in Computer Science or IT",
+  "- Diploma in CSE or IT + Skill-building",
+  "- BCA/MCA or B.Sc./M.Sc. in CS",
+  "- Self-taught via online platforms (Coursera, YouTube, etc.)",
+  "",
+  "🧩 Roadmap to Become a Software Engineer",
+  "",
+  "🧱 Step 1: Learn the Basics",
+  "- Programming Languages: C, C++, Python, Java",
+  "- Data Structures & Algorithms (DSA)",
+  "  - Arrays, Linked Lists, Stacks, Queues",
+  "  - Trees, Graphs, Recursion, Dynamic Programming",
+  "  - Practice on: GeeksforGeeks, LeetCode, HackerRank",
+  "",
+  "🌐 Step 2: Choose a Specialization",
+  "- Web Development",
+  "- Mobile App Development",
+  "- Data Science / AI & ML",
+  "- DevOps / Cloud Engineering",
+  "- Game Development",
+  "- Cybersecurity",
+  "",
+  "🛠️ Core Technical Skills",
+  "",
+  "1. Web Development",
+  "- HTML, CSS, JavaScript",
+  "- Frontend: React, Angular, Vue",
+  "- Backend: Node.js, Express, Django",
+  "- Databases: MongoDB, MySQL",
+  "- APIs, Auth (JWT/OAuth)",
+  "",
+  "2. Mobile App Development",
+  "- Android: Java, Kotlin",
+  "- iOS: Swift",
+  "- Cross-Platform: Flutter, React Native",
+  "",
+  "3. Software Engineering Concepts",
+  "- OOP (Object-Oriented Programming)",
+  "- OS (Operating Systems)",
+  "- CN (Computer Networks)",
+  "- DBMS (Database Systems)",
+  "",
+  "4. Tools & Practices",
+  "- Git, GitHub",
+  "- Linux Commands",
+  "- Docker, CI/CD Pipelines",
+  "- Agile, Scrum",
+  "",
+  "🤝 Soft Skills",
+  "- Communication",
+  "- Teamwork",
+  "- Problem-solving",
+  "- Time management",
+  "- Documentation",
+  "",
+  "📁 Projects to Build",
+  "- Portfolio Website",
+  "- Todo App",
+  "- Chat Application",
+  "- REST API with Auth",
+  "- E-Commerce Platform",
+  "- Open-source contributions",
+  "",
+  "📄 Resume & Portfolio",
+  "- Resume with skills, projects, GitHub",
+  "- Portfolio website via Netlify/Vercel",
+  "",
+  "💼 How to Get a Job",
+  "- Build LinkedIn & GitHub profile",
+  "- Apply on LinkedIn, Naukri, AngelList",
+  "- Practice DSA for interviews (LeetCode, InterviewBit)",
+  "",
+  "📚 Learning Platforms",
+  "- Free: freeCodeCamp, Harvard CS50, Roadmap.sh",
+  "- Paid: Udemy, Coursera (Google, Meta, IBM)",
+  "",
+  "🗺️ Career Growth Path",
+  "1. Intern",
+  "2. Junior Developer",
+  "3. Software Engineer",
+  "4. Senior Engineer",
+  "5. Team Lead",
+  "6. Engineering Manager",
+  "7. CTO",
+  "",
+  "💰 Salary (India Estimate)",
+  "- Fresher: ₹3–8 LPA",
+  "- Mid-level: ₹10–25 LPA",
+  "- Top MNCs/FAANG: ₹20–60+ LPA",
+  "",
+  "✅ Final Tips",
+  "- Code daily",
+  "- Build real projects",
+  "- Contribute to open source",
+  "- Network with other developers",
+  "- Stay updated with new technologies"],
+        resources: [
+          { name: "DSA Course", link: "https://youtu.be/8hly31xKli0" },
+          { name: "Full Course", link: "https://www.freecodecamp.org/" }
+        ],
+        icon: "💻",
+        image: "https://res.cloudinary.com/drax7i59f/image/upload/v1753381291/soft_yozuua.png",
+        category: "Software"
+      },
+      {
+        title: "ISRO Scientist (CSE)",
+        salary: "₹15L+/year (Level 10)",
+        steps: ["🚀 HOW TO BECOME AN ISRO SCIENTIST/ENGINEER",
+  "",
+  "🛰️ What is an ISRO Scientist/Engineer?",
+  "An ISRO Scientist/Engineer works on designing, developing, and launching satellites, rockets, and space-related systems.",
+  "They contribute to India's space missions (like Chandrayaan, Gaganyaan, Mars Orbiter) and research in aerospace, electronics, mechanical systems, and computer software.",
+  "",
+  "🎓 Eligibility Criteria",
+  "- B.E./B.Tech in CSE, ECE, Mechanical, Electrical, Civil, or other core branches",
+  "- Must have a minimum of 65% marks or 6.84 CGPA",
+  "- Age: Usually below 28–30 years",
+  "- Indian Citizenship required",
+  "",
+  "🧩 Step-by-Step Roadmap",
+  "",
+  "🧱 Step 1: Complete Your Engineering Degree",
+  "- Preferred branches: CSE, ECE, Mechanical, Electrical, Civil",
+  "- Diploma students can take lateral entry into B.Tech programs",
+  "- Maintain high CGPA and strong subject knowledge",
+  "",
+  "🧠 Step 2: Master Core Subjects",
+  "Based on your branch, study the following deeply:",
+  "- CSE: Data Structures, Algorithms, OS, CN, DBMS, Software Engineering",
+  "- ECE: Digital Electronics, Analog Circuits, Communication, Microprocessors",
+  "- Mechanical: Thermodynamics, Fluid Mechanics, Machine Design, Manufacturing",
+  "- Electrical: Power Systems, Machines, Control Systems, Measurements",
+  "",
+  "💻 Step 3: Practice Technical Skills",
+  "- Programming: C, C++, Python (especially for CSE branch)",
+  "- Problem Solving: Practice MCQs and technical questions",
+  "- Build projects: Simulations, space-related models, automation, AI for satellites",
+  "",
+  "📝 Step 4: Prepare for the ISRO Written Exam",
+  "- Pattern: 80 MCQs in 90 minutes (no negative marking)",
+  "- Focus areas: Core branch subjects, basic mathematics & logic",
+  "- Resources: Previous year papers, Made Easy books, ISRO sample papers",
+  "",
+  "📨 Step 5: Apply for ISRO Recruitment",
+  "- Check official portal: https://www.isro.gov.in/",
+  "- Common positions: Scientist/Engineer 'SC' in various departments",
+  "- Notifications usually released once a year",
+  "",
+  "🎤 Step 6: Crack the Interview",
+  "- After written test, top scorers are called for technical interviews",
+  "- Focus on fundamentals, clear concepts, explain logic clearly",
+  "- Be ready to answer project questions, internship work, and final year project",
+  "",
+  "🎓 Step 7: Join ISRO",
+  "- Selected candidates undergo training before posting",
+  "- Roles may include software development, system design, satellite modeling, mission control, testing, etc.",
+  "",
+  "🛠️ Useful Tools & Tech Stack (especially for CS Engineers)",
+  "- Programming: C, Python, Embedded C",
+  "- Tools: MATLAB, Simulink, LabVIEW, CAD software",
+  "- OS: Linux, RTOS",
+  "- Languages: VHDL, Verilog (for hardware design)",
+  "",
+  "🎯 Alternate Paths to ISRO",
+  "- Through GATE + IIST admission",
+  "- Through GATE + ISRO vacancies (sometimes they consider GATE score)",
+  "- Work in ISRO vendors like BEL, DRDO, BHEL and transition internally",
+  "",
+  "💼 Job Roles in ISRO",
+  "- Software Engineer / Embedded Systems Engineer",
+  "- Satellite System Developer",
+  "- Launch Vehicle Engineer",
+  "- Telemetry and Telecommand Specialist",
+  "- Mission Planning Engineer",
+  "",
+  "📈 Career Growth",
+  "- Scientist/Engineer ‘SC’ → SD → SE → SF → SG → Director level",
+  "- Opportunities to lead national space projects",
+  "",
+  "💰 Salary (approximate)",
+  "- Scientist/Engineer ‘SC’: ₹56,100/month + HRA + benefits",
+  "- Gross: ₹85,000 – ₹1,00,000 per month",
+  "- Free canteen, medical, housing (or HRA), transport, pension",
+  "",
+  "📚 Best Resources to Prepare",
+  "- ISRO Previous Year Papers (official site)",
+  "- Made Easy / ACE Academy Notes",
+  "- YouTube channels: Exergic, Unacademy, StudyIQ, GateSmashers (for CS)",
+  "- Books: RK Rajput (Mech), Galgotia (ECE), Gate Books",
+  "",
+  "✅ Final Tips",
+  "- Strong conceptual knowledge is key — not just memorization",
+  "- Solve ISRO papers under time limit",
+  "- Focus on your engineering branch subjects",
+  "- Keep checking the ISRO official site for latest updates",
+  "- Stay motivated — ISRO hires brilliant minds, but consistency is more important than IQ!"],
+        resources: [
+            { name: "ISRO Prep", link: "https://youtu.be/yk6vP-zgYQo" },
+            { name: "ISRO Official course", link: "https://elearning.iirs.gov.in " }
+        ],
+        icon: "🛰️",
+        image: "https://res.cloudinary.com/drax7i59f/image/upload/v1753380421/ISRO_egzkpm.png",
+        category: "Govt Jobs"
+      },
+      {
+        title: "Cybersecurity Analyst",
+        salary: "₹6L - ₹20L/year",
+        steps: [ "🛡️ HOW TO BECOME A CYBER SECURITY ANALYST",
+  "",
+  "🧠 Who is a Cyber Security Analyst?",
+  "A Cyber Security Analyst protects an organization’s systems and networks from cyber threats like malware, phishing, ransomware, and data breaches.",
+  "They monitor systems, investigate security incidents, perform vulnerability assessments, and implement preventive measures.",
+  "",
+  "🎓 Eligibility (Including Diploma Route)",
+  "- Option 1: B.Tech/B.E. in CSE, IT, or Cyber Security",
+  "- Option 2: Diploma in CSE/IT + Lateral Entry to B.Tech + Certifications",
+  "- Option 3: Any Graduate + Cyber Security Certifications (for career switchers)",
+  "- No strict age limit; most jobs require strong skills over formal degrees",
+  "",
+  "🧩 Step-by-Step Roadmap",
+  "",
+  "📍 Step 1: Learn Computer Fundamentals",
+  "- Operating Systems (Windows, Linux basics)",
+  "- Networking basics: OSI model, TCP/IP, DNS, HTTP/S",
+  "- Computer architecture and data handling",
+  "",
+  "📍 Step 2: Understand Cyber Security Basics",
+  "- Types of Cyber Attacks (Malware, Phishing, SQL Injection)",
+  "- CIA Triad (Confidentiality, Integrity, Availability)",
+  "- Firewalls, VPNs, IDS/IPS",
+  "- Basics of Ethical Hacking",
+  "",
+  "📍 Step 3: Learn Tools & Technologies",
+  "- Wireshark, Nmap, Burp Suite, Metasploit",
+  "- Linux CLI (Kali Linux preferred)",
+  "- Antivirus, SIEM Tools (e.g., Splunk, ELK Stack)",
+  "- Endpoint Security & Email Security tools",
+  "",
+  "📍 Step 4: Learn Programming & Scripting (Basics)",
+  "- Python (for automation, scripting)",
+  "- Bash/Shell scripting",
+  "- SQL (basic database understanding)",
+  "- JavaScript (optional, for web app security)",
+  "",
+  "📍 Step 5: Practice Hands-on Skills",
+  "- Use platforms like Hack The Box, TryHackMe, CyberTalents",
+  "- Simulate attacks in virtual labs (e.g., VirtualBox + Kali + Metasploitable)",
+  "- Build a home lab setup for penetration testing and monitoring",
+  "",
+  "📍 Step 6: Get Certified (Optional but Powerful)",
+  "- Basic: CompTIA Security+, Google Cybersecurity Cert (Free via Coursera)",
+  "- Intermediate: CEH (Certified Ethical Hacker), Cisco CCNA Security",
+  "- Advanced: OSCP (Offensive Security), CISSP (for senior roles)",
+  "",
+  "📍 Step 7: Build a Resume + Portfolio",
+  "- Add real-world projects (vulnerability scanning, SOC simulation, risk assessment)",
+  "- Share write-ups on GitHub or blogs (e.g., 'How I hacked X CTF challenge')",
+  "- Create a LinkedIn profile highlighting certifications, labs, and skills",
+  "",
+  "📍 Step 8: Apply for Jobs & Internships",
+  "- Roles to apply for:",
+  "  - SOC Analyst (Level 1/2)",
+  "  - Security Analyst",
+  "  - Junior Penetration Tester",
+  "  - Vulnerability Assessment Engineer",
+  "- Platforms: LinkedIn, Naukri, CyberSecJobs, Internshala",
+  "",
+  "🔧 Additional Tools to Learn",
+  "- SIEM: Splunk, Wazuh, Graylog",
+  "- Ticketing: JIRA, ServiceNow",
+  "- Endpoint Detection: CrowdStrike, Carbon Black",
+  "- Cloud Security: AWS Security Tools, Microsoft Defender",
+  "",
+  "💼 Career Path / Progression",
+  "1. Intern / Junior Cyber Analyst",
+  "2. SOC Analyst (L1 → L2 → L3)",
+  "3. Penetration Tester / Red Team Specialist",
+  "4. Cyber Security Engineer",
+  "5. Security Architect / Manager",
+  "6. CISO (Chief Information Security Officer)",
+  "",
+  "💰 Salary Range (India)",
+  "- Fresher: ₹3 – ₹6 LPA",
+  "- With 2–3 years exp: ₹7 – ₹12 LPA",
+  "- Top companies / MNCs: ₹15 – ₹25+ LPA",
+  "",
+  "📚 Learning Resources",
+  "- YouTube: NetworkChuck, IppSec, STÖK, TheCyberMentor",
+  "- Free: TryHackMe, PortSwigger Web Academy, Google Cybersecurity Course",
+  "- Paid: Udemy (Courses by Zaid Sabih, Heath Adams), EC-Council CEH",
+  "- Books: 'The Web Application Hacker's Handbook', 'Hacking: The Art of Exploitation'",
+  "",
+  "✅ Final Tips",
+  "- Stay updated: Follow CVEs, cybersecurity news (Krebs, ThreatPost)",
+  "- Practice daily: 30 mins to 1 hour on labs",
+  "- Focus on real-world scenarios over just theory",
+  "- Join security communities (Reddit, Discord, LinkedIn groups)",
+  "- Learn, hack ethically, and document everything!"],
+        resources: [{ name: "Cybersecurity Basics", link: "https://youtu.be/inWWhr5tnEA" },
+            { name: "ISC2 Certified in Cybersecurity (CC)", link: "https://www.isc2.org/Certifications/Cybersecurity" },
+            { name: "Google Cybersecurity Professional Certificate (Coursera Audit)", link: "https://www.coursera.org/professional-certificates/google-cybersecurity" }
+        ],
+        icon: "🛡️",
+        image: "https://res.cloudinary.com/drax7i59f/image/upload/v1753380904/CYBER_khnemk.png",
+        category: "Software"
+      },
+      {
+        title: "Cloud Engineer",
+        salary: "₹7L - ₹25L/year",
+        steps: ["Learn AWS", "Get certified", "Build cloud projects", "Understand CI/CD"],
+        resources: [{ name: "AWS Course", link: "https://youtu.be/ulprqHHWlng" }],
+        icon: "☁️",
+        image: "https://res.cloudinary.com/drax7i59f/image/upload/v1753381126/cloiud_jtgjip.png",
+      },
+      {
+        title: "Android App Developer",
+        salary: "₹5L - ₹15L/year",
+        steps: ["Learn Kotlin", "Use Android Studio", "Build apps", "Publish to Play Store"],
+        resources: [{ name: "Android Tutorial", link: "https://youtu.be/fis26HvvDII" }],
+        icon: "📱",
+        image: "https://res.cloudinary.com/drax7i59f/image/upload/v1753381727/Andriod_dev_u2nrog.png",
+        category: "Software"
+      },
+      {
+        title: "UI/UX Designer",
+        salary: "₹4L - ₹15L/year",
+        steps: ["Learn design principles", "Use Figma", "Build portfolio", "Work on case studies"],
+        resources: [{ name: "Figma Crash Course", link: "https://youtu.be/jwCmIBJ8Jtc" }],
+        icon: "🎨",
+        image: "https://res.cloudinary.com/drax7i59f/image/upload/v1753381727/UI_uX_pcfpce.png",
+        category: "Design"
+      },
+      {
+        title: "Railway JE",
+        salary: "₹6L+/year",
+        steps: ["Prepare RRB JE syllabus", "Practice technical MCQs", "Apply via rrb.gov.in"],
+        resources: [{ name: "RRB JE Prep", link: "https://youtu.be/bqsAPWq81D8" }],
+        icon: "🚆",
+        image: "https://cdn-icons-png.flaticon.com/512/2917/2917995.png",
+        category: "Govt Jobs"
+      },
+      {
+        title: "Civil Site Engineer",
+        salary: "₹3L - ₹8L/year",
+        steps: ["Learn AutoCAD", "Understand construction techniques", "Work on-site projects"],
+        resources: [{ name: "Site Engineer Tips", link: "https://youtu.be/jN9v58EZnZw" }],
+        icon: "🚧",
+        image: "https://cdn-icons-png.flaticon.com/512/2099/2099076.png",
+        category: "Core Engineering"
+      },
+      {
+        title: "Embedded Systems Engineer",
+        salary: "₹4L - ₹12L/year",
+        steps: ["Learn C, Microcontrollers", "Work with Arduino", "Design real-time systems"],
+        resources: [{ name: "Embedded C", link: "https://youtu.be/OYzZ5jMpJS0" }],
+        icon: "🔌",
+        image: "https://cdn-icons-png.flaticon.com/512/4835/4835476.png",
+        category: "Core Engineering"
+      },
+      {
+        title: "Digital Marketing Specialist",
+        salary: "₹3L - ₹15L/year",
+        steps: ["Learn SEO & Ads", "Run campaigns", "Certifications", "Freelance or agency work"],
+        resources: [{ name: "DM Crash Course", link: "https://youtu.be/nlLTq7IMjC4" }],
+        icon: "📈",
+        image: "https://cdn-icons-png.flaticon.com/512/3214/3214424.png",
+        category: "Design"
+      },
+      {
+        title: "Game Developer",
+        salary: "₹5L - ₹15L/year",
+        steps: ["Learn Unity/C#", "Build game projects", "Publish on Play Store or Steam"],
+        resources: [{ name: "Unity Tutorial", link: "https://youtu.be/5-QXwJNsSkM" }],
+        icon: "🎮",
+        image: "https://cdn-icons-png.flaticon.com/512/2965/2965101.png",
+        category: "Software"
+      },
+       {
+        "title": "Full Stack Developer",
+        "salary": "₹6L - ₹20L/year",
+        "steps": [
+            "Master HTML, CSS, JS (Frontend)",
+            "Learn backend using Node.js/Django",
+            "Understand databases (MongoDB, SQL)",
+            "Build full-stack projects & deploy on cloud"
+        ],
+        "resources": [
+            {"name": "Full Stack Tutorial", "link": "https://youtu.be/zJSY8tbf_ys"}
+        ],
+        "icon": "🧱",
+        "image": "https://cdn-icons-png.flaticon.com/512/3296/3296467.png",
+        "category": "Software"
+    },
+    {
+        "title": "Network Engineer",
+        "salary": "₹3.5L - ₹12L/year",
+        "steps": [
+            "Learn networking concepts (OSI, IP, DNS)",
+            "Get CCNA certified",
+            "Practice network setups using Cisco Packet Tracer",
+            "Apply in ISPs, MNCs, or telecom sector"
+        ],
+        "resources": [
+            {"name": "CCNA Basics", "link": "https://youtu.be/xkX4M3fOXcA"}
+        ],
+        "icon": "🌐",
+        "image": "https://cdn-icons-png.flaticon.com/512/2913/2913469.png",
+        "category": "Software"
+    },
+    {
+        "title": "Interior Designer",
+        "salary": "₹3L - ₹15L/year",
+        "steps": [
+            "Learn SketchUp, AutoCAD, 3Ds Max",
+            "Understand space planning, colors, materials",
+            "Create a portfolio of design projects",
+            "Work under an interior firm or freelance"
+        ],
+        "resources": [
+            {"name": "Interior Design Basics", "link": "https://youtu.be/gW6tEL_f4Nk"}
+        ],
+        "icon": "🛋️",
+        "image": "https://cdn-icons-png.flaticon.com/512/5957/5957033.png",
+        "category": "Design"
+    },
+    {
+        "title": "Cloud Architect",
+        "salary": "₹12L - ₹35L/year",
+        "steps": [
+            "Master cloud platforms (AWS/Azure/GCP)",
+            "Learn CI/CD, Kubernetes, Docker",
+            "Build & deploy cloud infra",
+            "Get AWS Solutions Architect certification"
+        ],
+        "resources": [
+            {"name": "AWS Architect Path", "link": "https://youtu.be/ulprqHHWlng"}
+        ],
+        "icon": "🏛️",
+        "image": "https://cdn-icons-png.flaticon.com/512/4481/4481097.png",
+        "category": "Software"
+    },
+    {
+        "title": "Bureaucrat (UPSC Civil Services)",
+        "salary": "₹12L - ₹25L/year + perks",
+        "steps": [
+            "Complete any degree (BA/B.Tech)",
+            "Prepare GS, CSAT, Optional Subject",
+            "Practice writing for mains",
+            "Crack UPSC Prelims → Mains → Interview"
+        ],
+        "resources": [
+            {"name": "UPSC Strategy", "link": "https://youtu.be/1Wv8UYdcWmU"}
+        ],
+        "icon": "🏛️",
+        "image": "https://cdn-icons-png.flaticon.com/512/3135/3135768.png",
+        "category": "Govt Jobs"
+    },
+    {
+        "title": "Biomedical Engineer",
+        "salary": "₹4L - ₹12L/year",
+        "steps": [
+            "Learn biology + engineering mix",
+            "Understand hospital equipment",
+            "Intern with medical device firms",
+            "Work in hospitals, research labs"
+        ],
+        "resources": [
+            {"name": "Intro to Biomedical", "link": "https://youtu.be/ONg8zDdM3g0"}
+        ],
+        "icon": "🧬",
+        "image": "https://cdn-icons-png.flaticon.com/512/3014/3014148.png",
+        "category": "Core Engineering"
+    },
+    {
+        "title": "Fire & Safety Officer",
+        "salary": "₹3L - ₹8L/year",
+        "steps": [
+            "Do diploma in Fire Safety",
+            "Understand OSHA standards",
+            "Work in construction or plants",
+            "Apply to core industrial companies"
+        ],
+        "resources": [
+            {"name": "Fire Safety Intro", "link": "https://youtu.be/jkCMhgVYglc"}
+        ],
+        "icon": "🚒",
+        "image": "https://cdn-icons-png.flaticon.com/512/809/809957.png",
+        "category": "Core Engineering"
+    },
+    {
+        "title": "Database Administrator (DBA)",
+        "salary": "₹4L - ₹15L/year",
+        "steps": [
+            "Learn SQL & DBMS concepts deeply",
+            "Understand Oracle, MySQL, PostgreSQL",
+            "Practice backups, indexes, queries",
+            "Apply in banking, SaaS firms"
+        ],
+        "resources": [
+            {"name": "DBA Crash Course", "link": "https://youtu.be/ztHopE5Wnpc"}
+        ],
+        "icon": "🗄️",
+        "image": "https://cdn-icons-png.flaticon.com/512/2085/2085057.png",
+        "category": "Software"
+    },
+    {
+        "title": "Statistician / Data Scientist",
+        "salary": "₹6L - ₹25L/year",
+        "steps": [
+            "Learn probability, stats, R/Python",
+            "Use pandas, seaborn, sklearn",
+            "Work on real datasets",
+            "Publish on GitHub or LinkedIn"
+        ],
+        "resources": [
+            {"name": "Data Science Roadmap", "link": "https://youtu.be/ua-CiDNNj30"}
+        ],
+        "icon": "📈",
+        "image": "https://cdn-icons-png.flaticon.com/512/2166/2166825.png",
+        "category": "Software"
+    },
+    {
+        "title": "Junior Engineer - PWD/SSC/PSU",
+        "salary": "₹5L - ₹10L/year",
+        "steps": [
+            "Prepare diploma-based tech subjects",
+            "Follow JE exam patterns",
+            "Practice mock exams and solve PYQs",
+            "Apply via SSC or state PSC"
+        ],
+        "resources": [
+            {"name": "JE Exam Prep", "link": "https://youtu.be/_6w6EmM5qT8"}
+        ],
+        "icon": "🛠️",
+        "image": "https://cdn-icons-png.flaticon.com/512/3583/3583110.png",
+        "category": "Govt Jobs"
+    },
+    {
+        "title": "AI/ML Engineer",
+        "salary": "₹8L - ₹25L/year",
+        "steps": [
+            "Learn Python, Linear Algebra, and Statistics",
+            "Study ML libraries (Scikit-learn, TensorFlow, PyTorch)",
+            "Work on datasets and ML projects",
+            "Complete internships or research papers"
+        ],
+        "resources": [
+            {"name": "ML Roadmap", "link": "https://youtu.be/GwIo3gDZCVQ"}
+        ],
+        "icon": "🤖",
+        "image": "https://cdn-icons-png.flaticon.com/512/4712/4712107.png",
+        "category": "Software"
+    },
+    {
+        "title": "Mechanical Site Engineer",
+        "salary": "₹3L - ₹8L/year",
+        "steps": [
+            "Understand HVAC, piping, plumbing basics",
+            "Work on construction projects",
+            "Read mechanical drawings and blueprints",
+            "Gain experience on site handling"
+        ],
+        "resources": [
+            {"name": "HVAC Basics", "link": "https://youtu.be/Zo6SxjFPC8A"}
+        ],
+        "icon": "🏗️",
+        "image": "https://cdn-icons-png.flaticon.com/512/3439/3439414.png",
+        "category": "Core Engineering"
+    },
+    {
+        "title": "Bank PO/IBPS Officer",
+        "salary": "₹6L - ₹12L/year",
+        "steps": [
+            "Prepare Quant, Reasoning, English sections",
+            "Follow IBPS/SBI exam patterns",
+            "Mock tests and previous papers",
+            "Apply through ibps.in"
+        ],
+        "resources": [
+            {"name": "Bank PO Strategy", "link": "https://youtu.be/2_T1HtcwK6M"}
+        ],
+        "icon": "🏦",
+        "image": "https://cdn-icons-png.flaticon.com/512/1177/1177568.png",
+        "category": "Govt Jobs"
+    },
+    {
+        "title": "Python Developer",
+        "salary": "₹5L - ₹18L/year",
+        "steps": [
+            "Master core Python, OOPs",
+            "Learn Flask/Django",
+            "Build real-time projects",
+            "Contribute to open source"
+        ],
+        "resources": [
+            {"name": "Python Tutorial", "link": "https://youtu.be/_uQrJ0TkZlc"}
+        ],
+        "icon": "🐍",
+        "image": "https://cdn-icons-png.flaticon.com/512/5968/5968350.png",
+        "category": "Software"
+    },
+    {
+        "title": "Electrical Site Supervisor",
+        "salary": "₹3L - ₹6L/year",
+        "steps": [
+            "Understand site electrical layouts",
+            "Handle material estimates and safety",
+            "Work on real projects (LT/HT lines)"
+        ],
+        "resources": [
+            {"name": "Electrical Site Work", "link": "https://youtu.be/4D3GKcw3Wb4"}
+        ],
+        "icon": "🔋",
+        "image": "https://cdn-icons-png.flaticon.com/512/3659/3659894.png",
+        "category": "Core Engineering"
+    },
+    {
+        "title": "YouTuber / Content Creator",
+        "salary": "₹2L - ₹50L+/year",
+        "steps": [
+            "Choose niche (Tech, Vlogs, Education)",
+            "Learn editing and SEO",
+            "Be consistent with content",
+            "Monetize via ads, courses, sponsorships"
+        ],
+        "resources": [
+            {"name": "Start a Channel", "link": "https://youtu.be/2eWMzU4xNRk"}
+        ],
+        "icon": "🎥",
+        "image": "https://cdn-icons-png.flaticon.com/512/1384/1384060.png",
+        "category": "Content Creation"
+    },
+    {
+        "title": "VLSI Design Engineer",
+        "salary": "₹6L - ₹25L/year",
+        "steps": [
+            "Learn Digital Electronics & VHDL/Verilog",
+            "Understand ASIC/FPGA Design",
+            "Work on VLSI tools (Cadence, Synopsys)",
+            "Intern at core chip companies"
+        ],
+        "resources": [
+            {"name": "VLSI Basics", "link": "https://youtu.be/ldwXe6-xeyY"}
+        ],
+        "icon": "📟",
+        "image": "https://cdn-icons-png.flaticon.com/512/2879/2879680.png",
+        "category": "Core Engineering"
+    },
+    {
+        "title": "Software Tester (QA)",
+        "salary": "₹3L - ₹10L/year",
+        "steps": [
+            "Learn Manual & Automation Testing",
+            "Use tools like Selenium, JUnit",
+            "Write test cases and run reports",
+            "Work with Dev teams closely"
+        ],
+        "resources": [
+            {"name": "QA Testing Tutorial", "link": "https://youtu.be/BfEjDD8mWYg"}
+        ],
+        "icon": "🧪",
+        "image": "https://cdn-icons-png.flaticon.com/512/4086/4086679.png",
+        "category": "Software"
+    },
+    {
+        "title": "Technical Support Engineer",
+        "salary": "₹2.5L - ₹8L/year",
+        "steps": [
+            "Understand software/hardware basics",
+            "Learn to troubleshoot common issues",
+            "Develop soft skills",
+            "Apply to IT product/support companies"
+        ],
+        "resources": [
+            {"name": "Tech Support Basics", "link": "https://youtu.be/TSw7VJ1h5E4"}
+        ],
+        "icon": "📞",
+        "image": "https://cdn-icons-png.flaticon.com/512/535/535239.png",
+        "category": "Software"
+    },
+    {
+        "title": "Design Engineer (Auto Sector)",
+        "salary": "₹4L - ₹10L/year",
+        "steps": [
+            "Learn CATIA, NX CAD, SolidWorks",
+            "Understand GD&T and manufacturing processes",
+            "Work on automotive parts design",
+            "Intern with auto OEMs"
+        ],
+        "resources": [
+            {"name": "Automotive CAD", "link": "https://youtu.be/gB1W0rLxBRI"}
+        ],
+        "icon": "🚗",
+        "image": "https://cdn-icons-png.flaticon.com/512/2965/2965876.png",
+        "category": "Core Engineering"
+    },
+    {
+        "title": "Data Analyst",
+        "salary": "₹4L - ₹12L/year",
+        "steps": [
+            "Learn Excel, SQL, and Statistics",
+            "Master Python (Pandas, NumPy, Matplotlib)",
+            "Learn Power BI or Tableau",
+            "Build projects on Kaggle",
+            "Apply via job portals or internships"
+        ],
+        "resources": [
+            {"name": "Excel to SQL", "link": "https://youtu.be/9LZGB3OLXN0"},
+            {"name": "Data Analyst Roadmap", "link": "https://youtu.be/0J3Lw-UEA1E"}
+        ],
+        "icon": "📊",
+        "image": "https://cdn-icons-png.flaticon.com/512/4341/4341139.png",
+        "category": "Software"
+    },
+    {
+        "title": "Electrical Design Engineer",
+        "salary": "₹3.5L - ₹10L/year",
+        "steps": [
+            "Study Electrical CAD tools (AutoCAD Electrical)",
+            "Understand circuit design, PLC, SCADA basics",
+            "Work on mini industrial projects",
+            "Gain site experience or internships"
+        ],
+        "resources": [
+            {"name": "AutoCAD Electrical Tutorial", "link": "https://youtu.be/NnH4BbnBMwI"}
+        ],
+        "icon": "⚡",
+        "image": "https://cdn-icons-png.flaticon.com/512/1042/1042339.png",
+        "category": "Core Engineering"
+    },
+    {
+        "title": "Web Developer (Frontend)",
+        "salary": "₹4L - ₹15L/year",
+        "steps": [
+            "Learn HTML, CSS, JavaScript",
+            "Build projects using React or Vue",
+            "Understand responsive design & deployment",
+            "Create a portfolio website"
+        ],
+        "resources": [
+            {"name": "Frontend Crash Course", "link": "https://youtu.be/zJSY8tbf_ys"}
+        ],
+        "icon": "🌐",
+        "image": "https://cdn-icons-png.flaticon.com/512/1055/1055687.png",
+        "category": "Software"
+    },
+    {
+        "title": "Mechanical CAD Engineer",
+        "salary": "₹3L - ₹9L/year",
+        "steps": [
+            "Learn AutoCAD & SolidWorks",
+            "Practice 3D modeling and sheet metal design",
+            "Work on real mechanical part design tasks",
+            "Apply to manufacturing or OEM companies"
+        ],
+        "resources": [
+            {"name": "SolidWorks Tutorial", "link": "https://youtu.be/BV8Pp_JnJDg"}
+        ],
+        "icon": "⚙️",
+        "image": "https://cdn-icons-png.flaticon.com/512/3381/3381301.png",
+        "category": "Core Engineering"
+    },
+    {
+        "title": "Ethical Hacker",
+        "salary": "₹5L - ₹20L/year",
+        "steps": [
+            "Learn basics of networking and Linux",
+            "Master Kali Linux, Burp Suite, Wireshark",
+            "Complete CEH or OSCP certification",
+            "Work on bug bounty platforms (HackerOne)"
+        ],
+        "resources": [
+            {"name": "CEH Course", "link": "https://youtu.be/Ffzl5GzYtD0"}
+        ],
+        "icon": "🕵️",
+        "image": "https://cdn-icons-png.flaticon.com/512/10308/10308934.png",
+        "category": "Software"
+    }
+];
+
+    const container = document.getElementById('careerContainer');
+
+    function renderCareers(data) {
+      container.innerHTML = "";
+      data.forEach(career => {
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-lg shadow-md p-5 hover:shadow-lg cursor-pointer transition border border-purple-100";
+        card.innerHTML = `
+          <div class="flex flex-col items-start gap-3">
+            <img src="${career.image}" alt="${career.title}" class="w-full h-32 object-contain mb-2 rounded">
+            <div class="flex items-center gap-3">
+              <div class="text-2xl">${career.icon || "🧭"}</div>
+              <div>
+                <h3 class="text-lg font-semibold text-purple-700">${career.title}</h3>
+                <p class="text-sm text-gray-500">${career.salary}</p>
+                <button class="mt-2 text-sm text-blue-600 underline">View Roadmap</button>
+              </div>
+            </div>
+          </div>
+        `;
+        card.onclick = () => showModal(career);
+        container.appendChild(card);
+      });
+    }
+
+    function showModal(career) {
+      document.getElementById('modalTitle').textContent = career.title;
+      document.getElementById('modalSalary').textContent = `Average Salary: ${career.salary}`;
+      const stepsList = document.getElementById('modalSteps');
+      const linksList = document.getElementById('modalLinks');
+      stepsList.innerHTML = "";
+      linksList.innerHTML = "";
+      career.steps.forEach(step => {
+        const li = document.createElement('li');
+        li.textContent = step;
+        stepsList.appendChild(li);
+      });
+      career.resources.forEach(resource => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="${resource.link}" target="_blank">${resource.name}</a>`;
+        linksList.appendChild(li);
+      });
+      document.getElementById('roadmapModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('roadmapModal').classList.add('hidden');
+    }
+
+    document.getElementById('roadmapModal').addEventListener('click', function (e) {
+      if (e.target === this) closeModal();
+    });
+
+    function filterCareers() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const selectedCategory = document.getElementById('categoryFilter').value;
+      const filtered = careers.filter(career =>
+        career.title.toLowerCase().includes(query) &&
+        (selectedCategory === "" || career.category === selectedCategory)
+      );
+      renderCareers(filtered);
+    }
+
+    renderCareers(careers);
+  </script>
+</body>
+</html>

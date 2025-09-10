@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UConnect - Teacher Upload Notes</title>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 700px;
+    margin: 0 auto;
+    background: #f0f4ff;
+    padding: 0 20px 50px 20px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    gap: 10px;
+  }
+  header img.logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+  }
+  header h1 {
+    color: #384fe8;
+    font-weight: 700;
+    font-size: 1.8rem;
+  }
+  main {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 5px 22px rgb(56 79 232 / 0.25);
+    padding: 32px 28px;
+    margin-top: 10px;
+  }
+  h2 {
+    color: #384fe8;
+    margin-top: 0;
+    margin-bottom: 24px;
+  }
+  label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+  }
+  input[type="text"], textarea, input[type="file"] {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 18px;
+    border-radius: 9px;
+    border: 1.5px solid #aabff7;
+    font-size: 1.03rem;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+  textarea {
+    min-height: 90px;
+    resize: vertical;
+  }
+  button {
+    background: #384fe8;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.25s ease;
+    user-select: none;
+  }
+  button:hover {
+    background: #2a3fd3;
+  }
+  #uploadStatus {
+    margin-top: 15px;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img class="logo" src="https://res.cloudinary.com/drax7i59f/image/upload/v1756808196/U11_yv2fcp.png" alt="UConnect Logo" />
+  <h1>UConnect - Teacher Dashboard</h1>
+</header>
+
+<main>
+  <h2>Upload Notes & Assignments</h2>
+  <form id="uploadForm" aria-label="Upload Notes Form">
+    <label for="titleInput">Title *</label>
+    <input type="text" id="titleInput" required placeholder="Enter title" />
+
+    <label for="descriptionInput">Description</label>
+    <textarea id="descriptionInput" placeholder="Brief description (optional)"></textarea>
+
+    <label for="fileInput">Select File *</label>
+    <input type="file" id="fileInput" required accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.txt" />
+
+    <button type="submit">Upload</button>
+    <div id="uploadStatus" role="alert" aria-live="polite"></div>
+  </form>
+</main>
+
+<script>
+  // Your Firebase config here - replace with your project details
+ // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBjiKldk4Q-J8dEbhBd6FTGyPb-TQoGadE",
+  authDomain: "st-fees.firebaseapp.com",
+  projectId: "st-fees",
+  storageBucket: "st-fees.firebasestorage.app",
+  messagingSenderId: "865723388538",
+  appId: "1:865723388538:web:e49e6bde9ff7023aae61c3",
+  measurementId: "G-Y9WQXHKTX4"
+};
+
+  firebase.initializeApp(firebaseConfig);
+  const firestore = firebase.firestore();
+  const storage = firebase.storage();
+
+  const uploadForm = document.getElementById('uploadForm');
+  const uploadStatus = document.getElementById('uploadStatus');
+  const titleInput = document.getElementById('titleInput');
+  const descriptionInput = document.getElementById('descriptionInput');
+  const fileInput = document.getElementById('fileInput');
+
+  uploadForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    uploadStatus.style.color = 'black';
+    uploadStatus.textContent = '';
+
+    const title = titleInput.value.trim();
+    const description = descriptionInput.value.trim();
+    const file = fileInput.files[0];
+
+    if (!title || !file) {
+      uploadStatus.style.color = 'red';
+      uploadStatus.textContent = 'Please enter title and select a file.';
+      return;
+    }
+
+    try {
+      uploadStatus.textContent = 'Uploading...';
+
+      const timestamp = Date.now();
+      // Replace spaces to avoid URL issues
+      const fileNameSafe = file.name.replace(/\s+/g, '_');
+      const filePath = `notes/${timestamp}_${fileNameSafe}`;
+
+      const fileRef = storage.ref().child(filePath);
+      const snapshot = await fileRef.put(file);
+      const downloadURL = await snapshot.ref.getDownloadURL();
+
+      await firestore.collection('notes').add({
+        title,
+        description,
+        fileName: file.name,
+        url: downloadURL,
+        uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+        // uploaderId: firebase.auth().currentUser ? firebase.auth().currentUser.uid : 'unknown' // optional auth
+      });
+
+      uploadStatus.style.color = 'green';
+      uploadStatus.textContent = 'Upload successful!';
+      uploadForm.reset();
+
+    } catch (error) {
+      uploadStatus.style.color = 'red';
+      uploadStatus.textContent = 'Upload failed: ' + error.message;
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teacher Accounts - View Submissions & Projects</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #f8faff;
+      color: #1a237e;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+    h1, h2 {
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+    .container {
+      max-width: 1100px;
+    }
+    .search-bar {
+      max-width: 400px;
+      margin-bottom: 2rem;
+    }
+    .section-wrapper {
+      margin-bottom: 3rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+    }
+    th, td {
+      border: 1px solid #d1d5db; /* gray-300 */
+      padding: 8px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background-color: #e0e7ff; /* indigo-100 */
+      color: #1a237e;
+    }
+    tbody tr:hover {
+      background-color: #f0f4ff;
+    }
+    .no-data {
+      font-style: italic;
+      color: #6b7280; /* gray-500 */
+      margin-top: 1rem;
+    }
+    @media (max-width: 768px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+      tr {
+        margin-bottom: 1rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 0.5rem;
+      }
+      td {
+        border: none;
+        position: relative;
+        padding-left: 50%;
+        white-space: pre-wrap;
+      }
+      td::before {
+        position: absolute;
+        top: 0.5rem;
+        left: 1rem;
+        width: 45%;
+        white-space: nowrap;
+        font-weight: 700;
+        color: #374151;
+        content: attr(data-label);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1 class="text-center mb-4">Teacher's Dashboard: Submitted Solutions & Projects</h1>
+
+    <input
+      type="text"
+      id="searchInput"
+      class="form-control search-bar mx-auto"
+      placeholder="Search by Roll Number..."
+      aria-label="Search by Roll Number"
+    />
+
+    <section class="section-wrapper">
+      <h2>Submitted Solutions</h2>
+      <div id="solutionsContainer">
+        <p class="text-muted">Loading solutions...</p>
+      </div>
+    </section>
+
+    <section class="section-wrapper">
+      <h2>Submitted Projects</h2>
+      <div id="projectsContainer">
+        <p class="text-muted">Loading projects...</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Firebase JS SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore-compat.js"></script>
+  <script>
+   // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBjiKldk4Q-J8dEbhBd6FTGyPb-TQoGadE",
+  authDomain: "st-fees.firebaseapp.com",
+  projectId: "st-fees",
+  storageBucket: "st-fees.firebasestorage.app",
+  messagingSenderId: "865723388538",
+  appId: "1:865723388538:web:e49e6bde9ff7023aae61c3",
+  measurementId: "G-Y9WQXHKTX4"
+};
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const solutionsContainer = document.getElementById("solutionsContainer");
+    const projectsContainer = document.getElementById("projectsContainer");
+    const searchInput = document.getElementById("searchInput");
+
+    let allSolutions = [];
+    let allProjects = [];
+
+    function renderTable(container, columns, data, emptyMessage) {
+      if (!data.length) {
+        container.innerHTML = `<p class="no-data">${emptyMessage}</p>`;
+        return;
+      }
+
+      let table = document.createElement("table");
+      let thead = document.createElement("thead");
+      let trHead = document.createElement("tr");
+      columns.forEach(col => {
+        let th = document.createElement("th");
+        th.textContent = col.header;
+        trHead.appendChild(th);
+      });
+      thead.appendChild(trHead);
+      table.appendChild(thead);
+
+      let tbody = document.createElement("tbody");
+      data.forEach(row => {
+        let tr = document.createElement("tr");
+        columns.forEach(col => {
+          let td = document.createElement("td");
+          let val = row[col.key] !== undefined ? row[col.key] : "";
+          // Format timestamp nicely
+          if (val && val.seconds !== undefined && val.nanoseconds !== undefined) {
+            const date = val.toDate();
+            val = date.toLocaleString();
+          }
+          td.textContent = val;
+          td.setAttribute("data-label", col.header);
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      container.innerHTML = "";
+      container.appendChild(table);
+    }
+
+    // Load all solutions from Firestore
+    function loadSolutions() {
+      solutionsContainer.innerHTML = "<p class='text-muted'>Loading solutions...</p>";
+      db.collection("solutions").orderBy("submittedAt", "desc").get()
+        .then(snapshot => {
+          allSolutions = snapshot.docs.map(doc => ({ rollNumber: doc.id, ...doc.data() }));
+          filterAndRender();
+        })
+        .catch(err => {
+          solutionsContainer.innerHTML = `<p class="text-danger">Error loading solutions: ${err.message}</p>`;
+          console.error(err);
+        });
+    }
+
+    // Load all projects from Firestore
+    function loadProjects() {
+      projectsContainer.innerHTML = "<p class='text-muted'>Loading projects...</p>";
+      db.collection("miniProjects").orderBy("submittedAt", "desc").get()
+        .then(snapshot => {
+          allProjects = snapshot.docs.map(doc => ({ rollNumber: doc.id, ...doc.data() }));
+          filterAndRender();
+        })
+        .catch(err => {
+          projectsContainer.innerHTML = `<p class="text-danger">Error loading projects: ${err.message}</p>`;
+          console.error(err);
+        });
+    }
+
+    // Combine filtering and rendering both tables based on search input
+    function filterAndRender() {
+      const query = searchInput.value.trim().toLowerCase();
+
+      const filteredSolutions = query
+        ? allSolutions.filter(sol => sol.rollNumber.toLowerCase().includes(query))
+        : allSolutions;
+
+      const filteredProjects = query
+        ? allProjects.filter(proj => proj.rollNumber.toLowerCase().includes(query))
+        : allProjects;
+
+      renderTable(solutionsContainer, [
+        { header: "Roll Number", key: "rollNumber" },
+        { header: "Name", key: "name" },
+        { header: "Email", key: "email" },
+        { header: "Challenge Title", key: "challenge" },
+        { header: "Solution URL", key: "solutionURL" },
+        { header: "Additional Notes", key: "notes" },
+        { header: "Submitted At", key: "submittedAt" }
+      ], filteredSolutions, "No submitted solutions found.");
+
+      renderTable(projectsContainer, [
+        { header: "Roll Number", key: "rollNumber" },
+        { header: "Name", key: "name" },
+        { header: "Email", key: "email" },
+        { header: "Project Title", key: "projectTitle" },
+        { header: "Difficulty Level", key: "level" },
+        { header: "Tech Stack", key: "techStack" },
+        { header: "Steps", key: "steps" },
+        { header: "Resources URL", key: "resourcesLink" },
+        { header: "Submitted At", key: "submittedAt" }
+      ], filteredProjects, "No submitted projects found.");
+    }
+
+    // Search input event
+    searchInput.addEventListener("input", filterAndRender);
+
+    // Load data on page load
+    window.onload = () => {
+      loadSolutions();
+      loadProjects();
+    };
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

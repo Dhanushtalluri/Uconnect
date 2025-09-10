@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>UConnect Teacher Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Fonts & Material Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;400&family=Edu+SA+Beginner:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <style>
+    :root { --accent: #384fe8; --light: #eaf2ff; --grey: #f6f8fa;}
+    body {
+      font-family: 'Montserrat', Arial, sans-serif;
+      background: var(--grey);
+      margin: 0; min-height: 100vh;
+    }
+    .navbar {
+      width: 100%;
+      background: #21294c;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 0 0 0;
+      box-shadow: 0 2px 10px #5d80fc20;
+    }
+    .logo {
+      display: flex; align-items: center;
+      gap: 14px;
+      padding: 8px 32px 8px 20px;
+    }
+    .logo img {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      object-fit:cover;
+      box-shadow: 0 1px 10px #4254fa2a;
+      background: #111b65;
+      border: 3px solid #eaf2ff;
+    }
+    .logo-title {
+      font-size: 1.5rem;
+      color: var(--accent);
+      font-weight: bold;
+      letter-spacing: 2px;
+      font-family: 'Edu SA Beginner', cursive;
+    }
+    .dashboard-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 1.5px;
+      padding-right: 40px;
+      font-family:'Montserrat',sans-serif;
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+    .cards-wrap {
+      max-width: 1200px;
+      margin: 38px auto 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(276px, 1fr));
+      gap: 40px;
+      padding: 0 16px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 4px 40px #3862fd18, 0 0.5px 6px #ebeedb44;
+      padding: 32px 22px 26px 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.17s cubic-bezier(.23,1.11,.91,.91), box-shadow 0.14s;
+      cursor: pointer;
+      border: 2.5px solid transparent;
+      position: relative;
+      overflow: hidden;
+      min-width: 230px;
+      min-height: 220px;
+      z-index: 1;
+    }
+    .card:hover, .card:focus-visible {
+      transform: scale(1.045) rotate(-1deg);
+      box-shadow: 0 8px 40px #384fe86c, 0 2px 18px #bad4ff22;
+      border:2.5px solid var(--accent);
+      z-index: 2;
+      animation: cardBounce 0.7s cubic-bezier(.23,1.11,.91,.91);
+    }
+    @keyframes cardBounce {
+      0%   { transform: scale(1) }
+      22%  { transform: scale(1.09) }
+      38%  { transform: scale(0.98) }
+      60%  { transform: scale(1.045) rotate(-1deg)}
+      100% { transform: scale(1.045) rotate(-1deg)}
+    }
+    .card .iconbg {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: var(--light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.7rem;
+      color: var(--accent);
+      margin-bottom: 12px;
+      box-shadow: 0 2px 10px #cbedf855;
+    }
+    .card h2 {
+      margin: 10px 0 7px 0;
+      font-size: 1.12rem;
+      text-align: center;
+      color: #292e49;
+      font-weight: 700;
+      letter-spacing: .7px;
+    }
+    .card p {
+      margin:0;
+      min-height: 46px;
+      text-align:center;
+      color:#4e5f8a;
+      font-size:0.96em;
+    }
+    .card img.card-img {
+      width: 94px;
+      height: 72px;
+      object-fit:cover;
+      border-radius: 11px;
+      margin-top:18px;
+      margin-bottom:0;
+    }
+    @media (max-width:700px){
+      .dashboard-title {font-size:1.2rem; padding-right:8px;}
+      .logo-title {font-size:1rem;}
+      .cards-wrap {gap:20px;}
+      .navbar .logo img {width:40px;height:40px;}
+    }
+    @media (max-width:440px){
+      .navbar {flex-direction:column;align-items:flex-start;}
+      .logo {padding:9px;}
+      .cards-wrap {grid-template-columns:1fr; gap:15px;}
+      .dashboard-title {padding:8px 0;}
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar/Header -->
+  <nav class="navbar">
+    <div class="logo">
+      <!-- CHANGE THIS img src FOR YOUR LOGO LATER: -->
+      <img src="https://res.cloudinary.com/drax7i59f/image/upload/v1754386347/U_oahqy4.png" alt="Logo">
+      <span class="logo-title">UConnect</span>
+    </div>
+    <span class="dashboard-title">Teacher Dashboard</span>
+  </nav>
+
+  <!-- Animated Cards Homepage -->
+  <section class="cards-wrap">
+    <div class="card" onclick="fees()">
+      <div class="iconbg"><span class="material-symbols-outlined">qr_code_scanner</span></div>
+      <h2>Fees Verifier</h2>
+      <p>Scan receipt QR or enter receipt ID to quickly validate student payments.</p>
+      <img class="card-img" src="https://i.pinimg.com/1200x/af/62/d6/af62d642f9546f55a108d28d17c59ef8.jpg" alt="Verify">
+    
+
+    </div>
+    <div class="card" onclick="UploadNotesAssignments()">
+      <div class="iconbg"><span class="material-symbols-outlined">upload_file</span></div>
+      <h2>Upload Notes / Assignments</h2>
+      <p>Upload class notes, assignments, and resources for students. Supports PDFs, images, docs.</p>
+      <img class="card-img" src="https://i.pinimg.com/736x/24/02/76/2402766dcd6f79261af1f09c285350ee.jpg" alt="Upload">
+    </div>
+    <div class="card" onclick="SendNotifications()">
+      <div class="iconbg"><span class="material-symbols-outlined">sms</span></div>
+      <h2>Send Notifications</h2>
+      <p>Send reminders, announcements, and alerts to all or selected students instantly.</p>
+      <img class="card-img" src="https://i.pinimg.com/736x/d6/bf/41/d6bf4155bd82d57db9557a9610f1cb5f.jpg" alt="Notify">
+    </div>
+    <div class="card" onclick="openresultAnalyzer()">
+      <div class="iconbg"><span class="material-symbols-outlined">query_stats</span></div>
+      <h2>Result Analyzer</h2>
+      <p>Analyze results and trends, see mark sheets, subject averages, and export data.</p>
+      <img class="card-img" src="https://i.pinimg.com/736x/11/ee/a3/11eea35b3fb4147bdf921f9d37b2caf7.jpg" alt="Analyze">
+    </div>
+    <div class="card" onclick="ManageAccounts()">
+      <div class="iconbg"><span class="material-symbols-outlined">group</span></div>
+      <h2>Manage Student performance</h2>
+      <p>View and analyze student performance metrics, track progress, and identify areas for improvement.</p>
+      <img class="card-img" src="https://i.pinimg.com/1200x/fe/9a/a1/fe9aa16b9af11389869e85a1fac4ee55.jpg" alt="Accounts">
+    </div>
+    <div class="card" onclick=" postchallenge()">
+      <div class="iconbg"><span class="material-symbols-outlined">campaign</span></div>
+      <h2>Post Weekly Challenge</h2>
+      <p>Create and manage weekly coding challenges for students.</p>
+      <img class="card-img" src="https://i.pinimg.com/736x/9b/e8/94/9be894044c48c9aae9a07f4186cb6472.jpg" alt="Announce">
+    </div>
+   
+  </section>
+
+  <script>
+    // Demo: click any card shows toast/alert, swap for real module navigation
+    function fees() {
+       window.location.href = "feesverify.html";
+    }
+    function UploadNotesAssignments() {
+       window.location.href = "notesupload.html";
+    }
+    function SendNotifications() {
+       window.location.href = "Sendnotification.html";
+    }
+    function showFeature() {
+       window.location.href = "feesverify.html";
+    }
+    function ManageAccounts() {
+       window.location.href = "manageaccounts.html";
+    }
+    function postchallenge() {
+       window.location.href = "postweekly.html";
+    }
+    function openresultAnalyzer() {
+       window.location.href = "resultanalyze.html";
+    }
+
+  </script>
+</body>
+</html>

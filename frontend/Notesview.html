@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UConnect - Student Notes Viewer</title>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 700px;
+    margin: 40px auto;
+    background: #f0f4ff;
+    padding: 20px;
+    color: #222;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 20px;
+  }
+  header img.logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+  }
+  header h1 {
+    color: #384fe8;
+    font-weight: 700;
+    font-size: 1.8rem;
+  }
+  #searchContainer {
+    margin: 18px 0 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #searchInput {
+    flex: 1;
+    padding: 9px 14px;
+    font-size: 1rem;
+    border: 1px solid #b9c6fd;
+    border-radius: 7px;
+    outline: none;
+    background: #fff;
+    transition: box-shadow 0.17s;
+  }
+  #searchInput:focus {
+    box-shadow: 0 0 0 1.5px #384fe8;
+    border-color: #466aff;
+  }
+  #notesList {
+    list-style: none;
+    padding-left: 0;
+  }
+  #notesList li {
+    background: #fff;
+    margin-bottom: 18px;
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 12px rgb(56 79 232 / 0.17);
+  }
+  #notesList li strong {
+    display: block;
+    font-size: 1.2rem;
+    margin-bottom: 6px;
+  }
+  #notesList li small {
+    display: block;
+    color: #666;
+    margin-bottom: 10px;
+    font-style: italic;
+  }
+  #notesList li a {
+    font-weight: 600;
+    color: #384fe8;
+    text-decoration: none;
+  }
+  #notesList li a:hover {
+    text-decoration: underline;
+  }
+  #notesList li em {
+    display: block;
+    margin-bottom: 10px;
+    color: #4a506a;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img class="logo" src="https://res.cloudinary.com/drax7i59f/image/upload/v1756406583/U-p_ndview.png" alt="UConnect Logo" />
+  <h1>
+Notes/Time Tables/Pre Exam Papers</h1>
+</header>
+
+<h2>Available Notes & Assignments</h2>
+<div id="searchContainer">
+  <input type="text" id="searchInput" placeholder="Search notes..." autocomplete="off" aria-label="Search notes">
+</div>
+<ul id="notesList" aria-live="polite" aria-busy="true">
+  Loading notes...
+</ul>
+
+<script>
+  // Firebase config placeholder - replace with your values
+  const firebaseConfig = {
+    apiKey: "AIzaSyBjiKldk4Q-J8dEbhBd6FTGyPb-TQoGadE",
+    authDomain: "st-fees.firebaseapp.com",
+    projectId: "st-fees",
+    storageBucket: "st-fees.firebasestorage.app",
+    messagingSenderId: "865723388538",
+    appId: "1:865723388538:web:e49e6bde9ff7023aae61c3",
+    measurementId: "G-Y9WQXHKTX4"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const firestore = firebase.firestore();
+
+  const notesList = document.getElementById('notesList');
+  const searchInput = document.getElementById('searchInput');
+
+  let allNotes = []; // cache to hold notes
+
+  // Fetch notes from Firestore and display
+  async function fetchNotes() {
+    try {
+      notesList.setAttribute('aria-busy', 'true');
+      const snapshot = await firestore.collection('notes').orderBy('uploadedAt', 'desc').get();
+
+      if (snapshot.empty) {
+        notesList.innerHTML = '<li>No notes or assignments available at the moment.</li>';
+        notesList.setAttribute('aria-busy', 'false');
+        allNotes = [];
+        return;
+      }
+
+      allNotes = []; // Reset before pushing
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        allNotes.push({
+          title: data.title || '',
+          description: data.description || '',
+          url: data.url || '#',
+          uploadedAt: (data.uploadedAt ? data.uploadedAt.toDate() : null)
+        });
+      });
+
+      renderNotes(allNotes);
+      notesList.setAttribute('aria-busy', 'false');
+    } catch (error) {
+      console.error('Failed to load notes:', error);
+      notesList.innerHTML = '<li>Error loading notes. Please try again later.</li>';
+      notesList.setAttribute('aria-busy', 'false');
+    }
+  }
+
+  function renderNotes(noteArray) {
+    if (!noteArray.length) {
+      notesList.innerHTML = '<li>No notes or assignments found.</li>';
+      return;
+    }
+    let html = '';
+    noteArray.forEach(data => {
+      const uploadDate = data.uploadedAt ? data.uploadedAt.toLocaleDateString() : 'Unknown date';
+      html += `
+        <li>
+          <strong>${data.title}</strong>
+          <small>Uploaded on ${uploadDate}</small>
+          ${data.description ? `<em>${data.description}</em>` : ''}
+          <a href="${data.url}" target="_blank" rel="noopener noreferrer" download>
+            View / Download
+          </a>
+        </li>
+      `;
+    });
+    notesList.innerHTML = html;
+  }
+
+  // Search filtering
+  searchInput.addEventListener('input', function() {
+    const searchVal = this.value.trim().toLowerCase();
+    if (!searchVal) {
+      renderNotes(allNotes);
+    } else {
+      const filtered = allNotes.filter(note => 
+        note.title.toLowerCase().includes(searchVal) ||
+        note.description.toLowerCase().includes(searchVal)
+      );
+      renderNotes(filtered);
+    }
+  });
+
+  fetchNotes();
+</script>
+
+</body>
+</html>

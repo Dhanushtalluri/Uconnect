@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Uconnect Teacher Dashboard</title>
+  <meta name="viewport" content="width=1400">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <!-- SheetJS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <!-- Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <style>
+    body { font-family: 'Roboto', sans-serif; margin: 0; background: #f0f6ff; color: #223; }
+    header {
+      display: flex; align-items: center; padding: 0.8rem 2rem; background: #0b4784; color: white;
+      font-size: 2.1rem; font-weight: bold; letter-spacing: 1px; height: 70px; gap: 18px;
+    }
+    header img { height: 52px; }
+    header .title { flex: 1; }
+    .container { max-width: 1400px; margin: 2.5rem auto; background: #fff; border-radius: 12px;
+                box-shadow: 0 6px 32px rgba(60, 90, 140, 0.11); padding: 2.4rem 2.6rem; }
+    .filters { display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.4rem; }
+    .filters label { font-weight: bold; }
+    .filters select, .filters button { padding: 0.5rem 0.9rem; border-radius: 4px; border: 1px solid #acd; font-size: 1.06rem; }
+    .filters button { background: #0a66c2; color: #fff; border: none; cursor: pointer; font-weight: 700; transition: background 0.2s; margin-left: 0.5rem;}
+    .filters button:hover { background: #084c98; }
+    .section { margin-top: 2.1rem; }
+    .section h2 { margin-bottom: 0.8rem; font-size: 1.3rem; color: #145099; }
+    .toppers-list { display:flex; gap:2rem; flex-wrap:wrap;}
+    .topper-card { background:#f2f7fc; border-radius: 8px; box-shadow:0 2px 6px rgba(120,170,200,0.10);padding:1.1rem 1.7rem; min-width:200px; font-size:1.11rem;}
+    .topper-card span { font-size:1.5rem; margin-right: 10px;}
+    .results-table { width: 100%; margin-top: 1.2rem; border-collapse: collapse; font-size: 1.06rem;}
+    .results-table th, .results-table td { border: 1px solid #d1ddf7; padding: 0.5rem 0.75rem; text-align: center;}
+    .results-table th { background: #e9f1fc; }
+    .results-table .rank-1 { background: #e5fbe5; font-weight: 700;}
+    .results-table .rank-2 { background: #e2ecfe; }
+    .results-table .rank-3 { background: #fff3d1; }
+    .subject-summary { background: #f9fbfe; border-radius:8px; box-shadow:0 2px 9px rgba(50,90,160,0.04); padding:1.1rem 1.7rem; font-size:1.09rem;}
+    .summary-item { margin-bottom: 11px; }
+    @media (max-width: 1500px) { .container { max-width: 98vw; } }
+    select[multiple] { min-height: 36px; min-width: 155px;}
+  </style>
+</head>
+<body>
+<header>
+  <img src="https://res.cloudinary.com/drax7i59f/image/upload/v1756406583/U-p_ndview.png" alt="Logo">
+  <span class="title">Uconnect</span>
+</header>
+<div class="container">
+  <div class="filters">
+    <label for="semesterSel">Semester:</label>
+    <select id="semesterSel"><option value="">All</option>
+      <option>Semester 1</option><option>Semester 2</option><option>Semester 3</option><option>Semester 4</option><option>Semester 5</option><option>Semester 6</option>
+    </select>
+    <label for="branchSel">Branch:</label>
+    <select id="branchSel"><option value="">All</option></select>
+    <button id="excelBtn">Download Excel (All Students)</button>
+  </div>
+
+  <div class="section" id="toppersSection">
+    <!-- Toppers List will render here -->
+  </div>
+
+  <div class="section">
+    <h2>Subject Analysis</h2>
+    <div class="subject-summary" id="subjectSummary"></div>
+  </div>
+
+  <div class="section">
+    <h2>All Student Results</h2>
+    <table class="results-table" id="resTable"></table>
+  </div>
+</div>
+
+<script>
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBjiKldk4Q-J8dEbhBd6FTGyPb-TQoGadE",
+  authDomain: "st-fees.firebaseapp.com",
+  projectId: "st-fees",
+  storageBucket: "st-fees.firebasestorage.app",
+  messagingSenderId: "865723388538",
+  appId: "1:865723388538:web:60d5ae456825855cae61c3",
+  measurementId: "G-PT132QNN2E"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const semesterSel = document.getElementById('semesterSel');
+const branchSel = document.getElementById('branchSel');
+const resTable = document.getElementById('resTable');
+const excelBtn = document.getElementById('excelBtn');
+const toppersSection = document.getElementById('toppersSection');
+const subjectSummary = document.getElementById('subjectSummary');
+
+let allResults = [];
+
+async function loadData() {
+  resTable.innerHTML = "<tr><td colspan='99'>Loading data...</td></tr>";
+  toppersSection.innerHTML = "";
+  subjectSummary.innerHTML = "";
+  allResults = [];
+  let query = db.collection("results");
+  if (semesterSel.value) query = query.where("semester", "==", semesterSel.value);
+
+  const snap = await query.get();
+  snap.forEach(doc => allResults.push(doc.data()));
+
+  // Branch filter options
+  const branches = Array.from(new Set(allResults.map(r => r.branch).filter(Boolean))).sort();
+  branchSel.innerHTML = '<option value="">All</option>';
+  branches.forEach(br => {
+    const opt = document.createElement('option'); opt.value = br; opt.textContent = br; branchSel.append(opt);
+  });
+
+  renderTable();
+  renderToppersList();
+  renderSubjectSummary();
+}
+
+function renderTable() {
+  let filtered = allResults.filter(r =>
+      (!semesterSel.value || r.semester === semesterSel.value) &&
+      (!branchSel.value || r.branch === branchSel.value)
+  );
+  if (!filtered.length) {
+    resTable.innerHTML = "<tr><td colspan='99'>No student results.</td></tr>";
+    return;
+  }
+  // Compute ranks by Grand Total
+  filtered = filtered.slice().sort((a, b) => (parseFloat(b.grandTotal)||0) - (parseFloat(a.grandTotal)||0));
+  filtered.forEach((r, i) => r.rank = i + 1);
+
+  // Find all unique subject codes for this filtered set
+  let allSubjects = [];
+  filtered.forEach(res => {
+    if (Array.isArray(res.subjects)) res.subjects.forEach(sub => {if(sub.code && !allSubjects.includes(sub.code))allSubjects.push(sub.code);})
+  });
+
+  // Table header
+  resTable.innerHTML = `<tr>
+    <th>Rank</th><th>PIN</th><th>Name</th><th>Branch</th><th>Semester</th>
+    <th>Total</th><th>GPA</th><th>Result</th>
+    ${allSubjects.map(s => `<th>${s}</th>`).join('')}
+    </tr>`;
+  // Table rows with rank colors
+  filtered.forEach(r => {
+    let css = r.rank == 1 ? 'rank-1' : r.rank==2 ? 'rank-2' : r.rank==3 ? 'rank-3' : '';
+    resTable.innerHTML += `<tr class="${css}">
+      <td>${getRankDisplay(r.rank)}</td>
+      <td>${r.roll||""}</td>
+      <td>${r.name||""}</td>
+      <td>${r.branch||""}</td>
+      <td>${r.semester||""}</td>
+      <td>${r.grandTotal ?? ""}</td>
+      <td>${r.gpa ?? ""}</td>
+      <td>${r.result ?? ""}</td>
+      ${allSubjects.map(subj=>{
+        let sub = Array.isArray(r.subjects)?r.subjects.find(s=>s.code===subj):null;
+        return `<td>${sub?sub.marks:"-"}</td>`
+      }).join('')}
+    </tr>`;
+  });
+}
+
+function getRankDisplay(rank) {
+  if(rank==1) return "🥇 1st";
+  if(rank==2) return "🥈 2nd";
+  if(rank==3) return "🥉 3rd";
+  return rank+"";
+}
+
+// --- Separate Toppers List ---
+function renderToppersList() {
+  let filtered = allResults.filter(r =>
+      (!semesterSel.value || r.semester === semesterSel.value) &&
+      (!branchSel.value || r.branch === branchSel.value)
+  );
+  filtered = filtered.slice().sort((a, b) => (parseFloat(b.grandTotal)||0) - (parseFloat(a.grandTotal)||0));
+  toppersSection.innerHTML = '<h2>Toppers List</h2>';
+  if (!filtered.length) { toppersSection.innerHTML += "<div>No toppers data available.</div>"; return; }
+
+  toppersSection.innerHTML += '<div class="toppers-list">'
+    + [0,1,2].map(idx => {
+      let r=filtered[idx]; if(!r) return "";
+      let rankTitle=idx==0?"1st Topper":idx==1?"2nd Topper":"3rd Topper";
+      let icon=idx==0?"🥇":idx==1?"🥈":"🥉";
+      return `<div class="topper-card"><span>${icon}</span><b>${rankTitle}</b><br>${r.name} (${r.roll})<br>Branch: <b>${r.branch||""}</b><br>Total: <b>${r.grandTotal??""}</b></div>`
+    }).join("") + '</div>';
+}
+
+// --- Subject Failure/Pass Analysis ---
+function renderSubjectSummary() {
+  let filtered = allResults.filter(r =>
+      (!semesterSel.value || r.semester === semesterSel.value) &&
+      (!branchSel.value || r.branch === branchSel.value)
+  );
+  if (!filtered.length) { subjectSummary.innerHTML = "No results to analyze."; return; }
+
+  // Compile subject codes
+  let subjectStats = {};
+  filtered.forEach(r => {
+    if (!Array.isArray(r.subjects)) return;
+    r.subjects.forEach(sub => {
+      let code = sub.code, marks = parseFloat(sub.marks)||0;
+      if (!subjectStats[code]) subjectStats[code] = { pass:0, fail:0 };
+      let isPass = (typeof sub.subResult === "string" && sub.subResult.toLowerCase().includes("pass"));
+      if(isPass) subjectStats[code].pass++;
+      else subjectStats[code].fail++;
+    });
+  });
+
+  // Find most failed subject and most passed subject
+  let mostFailed = { subj:"", n:0 };
+  let mostPassed = { subj:"", n:0 };
+  Object.keys(subjectStats).forEach(code=>{
+    if(subjectStats[code].fail > mostFailed.n) {mostFailed=subjEntry(subjectStats,code,"fail");}
+    if(subjectStats[code].pass > mostPassed.n) {mostPassed=subjEntry(subjectStats,code,"pass");}
+  });
+
+  subjectSummary.innerHTML = `
+    <div class="summary-item"><b>Most Failed Subject:</b>
+      ${mostFailed.subj ? `<span style="color:red;">${mostFailed.subj}</span> (${mostFailed.n} failures)` : "N/A"}
+    </div>
+    <div class="summary-item"><b>Most Passed Subject:</b>
+      ${mostPassed.subj ? `<span style="color:green;">${mostPassed.subj}</span> (${mostPassed.n} passes)` : "N/A"}
+    </div>
+  `;
+  function subjEntry(stats, code, field) {
+    return {subj: code, n: stats[code][field]};
+  }
+}
+
+// ---- Excel Export -----
+excelBtn.addEventListener('click', () => {
+  if (!allResults.length) return;
+  // All unique subjects for columns
+  let allSubjects = [];
+  allResults.forEach(res => {
+    if (Array.isArray(res.subjects)) res.subjects.forEach(sub => {if(sub.code && !allSubjects.includes(sub.code))allSubjects.push(sub.code);})
+  });
+  // Prepare data
+  const wsData = allResults.map(r => {
+    let out = {
+      "PIN": r.roll, "Name": r.name, "Branch": r.branch, "Semester": r.semester,
+      "Total": r.grandTotal, "GPA": r.gpa, "Result": r.result,"Rank":r.rank||"--"
+    };
+    allSubjects.forEach(s=>{
+      let sub = Array.isArray(r.subjects)?r.subjects.find(sb=>sb.code===s):null;
+      out[s] = sub?sub.marks:"-";
+    });
+    return out;
+  });
+  // Sheet
+  const ws = XLSX.utils.json_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Results");
+  XLSX.writeFile(wb, "All_Students_Results.xlsx");
+});
+
+// ---- Filters ----
+semesterSel.addEventListener('change', loadData);
+branchSel.addEventListener('change', loadData);
+
+// ---- Initial Load ----
+loadData();
+</script>
+</body>
+</html>

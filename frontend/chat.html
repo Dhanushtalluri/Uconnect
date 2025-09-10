@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UniTalk</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      transition: background 0.3s ease;
+    }
+    .chat-box {
+      height: calc(100vh - 340px);
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+    .chat-message {
+      margin-bottom: 0.75rem;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+    }
+    .chat-message.user {
+      text-align: right;
+      color: #6366f1;
+      background-color: #eef2ff;
+    }
+    .chat-message.bot {
+      text-align: left;
+      color: #1f2937;
+      background-color: #f3f4f6;
+    }
+    .dark .chat-message.bot {
+      color: #e5e7eb;
+      background-color: #374151;
+    }
+    .dark .chat-message.user {
+      background-color: #4f46e5;
+      color: #fff;
+    }
+    .typing-indicator {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+      background-color: #a78bfa;
+      animation: bounce 0.6s infinite alternate;
+      margin-right: 0.2rem;
+    }
+    .typing-indicator:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    .typing-indicator:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    @keyframes bounce {
+      from { transform: translateY(0); }
+      to { transform: translateY(-8px); }
+    }
+    .glow {
+      animation: glowPulse 1s ease-in-out infinite;
+      box-shadow: 0 0 0.7rem #6366f1;
+    }
+    @keyframes glowPulse {
+      0% { box-shadow: 0 0 0.3rem #a78bfa; }
+      50% { box-shadow: 0 0 1rem #7c3aed; }
+      100% { box-shadow: 0 0 0.3rem #a78bfa; }
+    }
+  </style>
+</head>
+<body class="bg-[#f3f4f6] dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col items-center justify-between px-4 py-6">
+  <div class="flex justify-between items-center w-full max-w-3xl mb-4">
+    <div class="flex items-center gap-4">
+      <lottie-player src="https://assets6.lottiefiles.com/packages/lf20_j1adxtyb.json" background="transparent" speed="1" style="width: 80px; height: 80px;" loop autoplay></lottie-player>
+      <h1 class="text-3xl font-bold text-purple-700 dark:text-purple-400">UniTalk</h1>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="student.html" class="text-sm text-purple-600 dark:text-purple-300 font-semibold hover:underline">Home</a>
+      <button onclick="clearChat()" class="text-sm text-red-500 hover:underline">Clear Chat</button>
+      <div class="flex items-center gap-2">
+        <span class="text-sm">Light</span>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" class="sr-only peer" onchange="toggleTheme()">
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600"></div>
+        </label>
+        <span class="text-sm">Dark</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-sm">🔈 Voice:</span>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="voiceToggle" class="sr-only peer" checked onchange="handleVoiceToggleChange()">
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600"></div>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="w-full max-w-3xl bg-white dark:bg-gray-800 rounded-3xl shadow-lg flex flex-col flex-grow">
+    <div class="chat-box px-6 py-4 bg-gray-50 dark:bg-gray-700 rounded-t-3xl" id="chatBox">
+    </div>
+    <div class="flex items-center gap-2 p-4 border-t bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 rounded-b-3xl">
+      <select id="modelSelect" class="border border-gray-300 dark:border-gray-600 p-2 rounded-xl bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white">
+        <option value="mistralai/mistral-7b-instruct">Mistral 7B</option>
+        <option value="openai/gpt-3.5-turbo">GPT-3.5 Turbo</option>
+        <option value="deepseek-ai/deepseek-llm">DeepSeek coder (coming soon)</option>
+      </select>
+      <input type="text" id="userInput" placeholder="Type your question... (Enter to send)" class="flex-1 border border-gray-300 dark:border-gray-600 p-3 rounded-xl focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white" />
+      <button id="voiceBtn" onclick="toggleVoiceInput()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl transition">🎤</button>
+      <button onclick="sendMessage()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-xl transition">Send</button>
+    </div>
+  </div>
+<script>
+  const input = document.getElementById("userInput");
+  const chatBox = document.getElementById("chatBox");
+  const modelSelect = document.getElementById("modelSelect");
+  let chatHistory = JSON.parse(localStorage.getItem("chatHistory")) || [];
+
+  function saveToHistory(role, content) {
+    chatHistory.push({ role, content });
+    localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+  }
+
+  function loadChatHistory() {
+    const saved = JSON.parse(localStorage.getItem("chatHistory")) || [];
+    saved.forEach(msg => {
+      const div = document.createElement("div");
+      div.className = `chat-message ${msg.role}`;
+      div.textContent = msg.content;
+      chatBox.appendChild(div);
+    });
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  async function sendMessage() {
+    const userText = input.value.trim();
+    if (!userText) return;
+
+    const userMsg = document.createElement("div");
+    userMsg.className = "chat-message user";
+    userMsg.textContent = userText;
+    chatBox.appendChild(userMsg);
+    saveToHistory("user", userText);
+
+    const botMsg = document.createElement("div");
+    botMsg.className = "chat-message bot";
+    botMsg.innerHTML = `<span class="typing-indicator"></span><span class="typing-indicator"></span><span class="typing-indicator"></span>`;
+    chatBox.appendChild(botMsg);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    input.value = "";
+
+    const nameMatch = userText.match(/my name is (\w+)/i);
+    if (nameMatch) {
+      const name = nameMatch[1];
+      localStorage.setItem("userName", name);
+      botMsg.textContent = `Nice to meet you, ${name}!`;
+      saveToHistory("bot", botMsg.textContent);
+      return;
+    }
+
+    if (/what(?:'s| is) my name/i.test(userText)) {
+      const savedName = localStorage.getItem("userName");
+      if (savedName) {
+        botMsg.textContent = `Your name is ${savedName}.`;
+      } else {
+        botMsg.textContent = `I don’t know your name yet. You can tell me by saying "my name is ...".`;
+      }
+      saveToHistory("bot", botMsg.textContent);
+      return;
+    }
+
+    const selectedModel = modelSelect.value;
+
+    try {
+      const response = await fetch("http://localhost:5000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: selectedModel,
+          messages: [{ role: "user", content: userText }]
+        })
+      });
+
+      const data = await response.json();
+      if (data?.choices?.[0]?.message?.content) {
+        const raw = data.choices[0].message.content;
+        const html = marked.parse(raw);
+        botMsg.innerHTML = DOMPurify.sanitize(html);
+        Prism.highlightAll();
+        speakText(raw);
+        saveToHistory("bot", raw);
+      } else {
+        botMsg.textContent = "Sorry, I couldn’t understand that.";
+        saveToHistory("bot", botMsg.textContent);
+      }
+
+    } catch (err) {
+      console.error(err);
+      botMsg.textContent = "Oops! There was an error connecting to the model.";
+      saveToHistory("bot", botMsg.textContent);
+    }
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function toggleTheme() {
+    document.documentElement.classList.toggle('dark');
+  }
+
+  function clearChat() {
+    localStorage.removeItem("chatHistory");
+    localStorage.removeItem("userName");
+    chatBox.innerHTML = `<div class="chat-message bot">Hi! I’m UniTalk, your assistant from Universal College of Engineering and Technology. How can I help you today?</div>`;
+    chatHistory = [];
+  }
+
+  let recognition;
+  let recognizing = false;
+
+  function toggleVoiceInput() {
+    const voiceBtn = document.getElementById("voiceBtn");
+
+    if (!recognizing) {
+      recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.start();
+      recognizing = true;
+
+      voiceBtn.textContent = "🛑";
+      voiceBtn.classList.add("glow");
+
+      recognition.onresult = function (event) {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById("userInput").value = transcript;
+        sendMessage();
+      };
+
+      recognition.onend = function () {
+        recognizing = false;
+        voiceBtn.textContent = "🎤";
+        voiceBtn.classList.remove("glow");
+      };
+
+      recognition.onerror = function (event) {
+        alert("Voice input error: " + event.error);
+        recognizing = false;
+        voiceBtn.textContent = "🎤";
+        voiceBtn.classList.remove("glow");
+      };
+    } else {
+      recognition.stop();
+      recognizing = false;
+      voiceBtn.textContent = "🎤";
+      voiceBtn.classList.remove("glow");
+    }
+  }
+
+  function speakText(text) {
+    const voiceToggle = document.getElementById("voiceToggle");
+    if (!voiceToggle || !voiceToggle.checked) return;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 1;
+    speechSynthesis.speak(utterance);
+  }
+
+  function handleVoiceToggleChange() {
+    const voiceToggle = document.getElementById("voiceToggle");
+    if (!voiceToggle.checked) {
+      speechSynthesis.cancel();
+    }
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    loadChatHistory();
+    const name = localStorage.getItem("userName");
+    if (name && chatHistory.length === 0) {
+      const greet = document.createElement("div");
+      greet.className = "chat-message bot";
+      greet.textContent = `Welcome back, ${name}! How can I help you today?`;
+      chatBox.appendChild(greet);
+      saveToHistory("bot", greet.textContent);
+    } else if (!chatHistory.length) {
+      const greet = document.createElement("div");
+      greet.className = "chat-message bot";
+      greet.textContent = `Hi! I’m your UniTalk. How can I help you today?`;
+      chatBox.appendChild(greet);
+      saveToHistory("bot", greet.textContent);
+    }
+  });
+</script>
+
+</body>
+</html>

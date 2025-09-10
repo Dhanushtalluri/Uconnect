@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>UConnect Teacher - Fees Status & Receipt Download</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google Fonts & Material Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <!-- Firebase Libraries (Compat Version) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- jsPDF for PDF download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root { --accent: #384fe8; --light: #eaf2ff; --grey: #f6f8fa;}
+    body {
+      background: var(--grey);
+      font-family: 'Montserrat', Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+    .headerbar {
+      width: 100%;
+      background: #21294c;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 0;
+      min-height: 66px;
+      box-shadow: 0 2px 14px #4254fa13;
+    }
+    .headerbar .logo {
+      display: flex; align-items: center; gap: 11px; padding: 0 0 0 23px;
+    }
+    .headerbar .logoimg {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: #fff; object-fit: cover;
+      box-shadow: 0 1px 10px #4254fa20; border: 2.1px solid #eaf2ff;
+    }
+    .headerbar .uc-title {
+      font-size: 1.5rem;
+      color: #f7b731;
+      font-weight: 700;
+      letter-spacing: 2px;
+      font-family: 'Montserrat', Arial, sans-serif;
+    }
+    .headerbar .moduletitle {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-left: auto;
+      margin-right: 34px;
+      color: #fff;
+      letter-spacing: 1.5px;
+    }
+    @media (max-width:600px){
+      .headerbar .moduletitle { font-size:1.07rem; margin-right:9px;}
+      .headerbar .uc-title { font-size:1.03rem;}
+      .headerbar .logoimg {width:32px; height:32px;}
+    }
+
+    /* Download Receipt Card */
+    .download-receipt-card {
+      background:#fff;
+      max-width:390px;
+      margin:32px auto 24px auto;
+      border-radius:13px;
+      box-shadow: 0 2px 16px #8dbbff33;
+      padding:19px 19px 15px 19px;
+      display:flex;
+      flex-direction:column;align-items:stretch;
+    }
+    .download-receipt-card > div {
+      display:flex;align-items:center;gap:8px;
+      margin-bottom: 10px;
+    }
+    .download-receipt-card form {
+      display:flex;flex-wrap:wrap;gap:8px;
+    }
+    .download-receipt-card form input[type=text] {
+      flex:1 1 160px;
+      padding:7.5px;
+      font-size:1em;
+      border-radius:6px;
+      border:1.1px solid #bacafd;
+    }
+    .download-receipt-card form button {
+      background:#384fe8;
+      padding:7.5px 17px;
+      font-size:1em;
+      border:none;
+      border-radius:6px;
+      color:#fff;
+      cursor:pointer;
+      user-select:none;
+    }
+    .download-receipt-card form button:hover {
+      background:#2a3fd3;
+    }
+    #downloadReceiptResult {
+      display:none;
+      margin-top:8px;
+      background:#f3f7fb;
+      border-radius:7px;
+      padding:9px 11px;
+      font-size:1em;
+      min-height:30px;
+      color:#18317c;
+      white-space: pre-line;
+      word-wrap: break-word;
+    }
+    #downloadReceiptBtn {
+      display:none;
+      margin-top:10px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 9px 17px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1em;
+      user-select: none;
+      transition: background-color 0.25s ease;
+    }
+    #downloadReceiptBtn:hover {
+      background: #2a3fd3;
+    }
+
+    /* Main Fees Status Panel */
+    main {
+      max-width: 1100px;
+      margin: 0 auto 48px auto;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 4px 40px #384fe818, 0 0.5px 6px #ebeedb44;
+      padding: 28px 22px 36px 22px;
+    }
+    h2 {
+      color: #384fe8;
+      margin-bottom: 16px;
+      font-size: 2rem;
+      letter-spacing: 1px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .search-row {
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      flex-wrap: wrap;
+    }
+    .search-row input[type="text"] {
+      font-size: 1.03em;
+      padding: 8px 13px;
+      border-radius: 6px;
+      border: 1.4px solid #bad4ff;
+      width: 280px;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    .search-row button {
+      padding: 8px 17px;
+      border-radius: 7px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-weight: 600;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background .16s;
+      user-select: none;
+    }
+    .search-row button:hover { background: #21287b; }
+    .status-table-scroll {
+      overflow-x: auto;
+      background: #f6f8fa;
+      border-radius: 13px;
+      box-shadow: 0 2px 18px #b2c7ff08;
+      padding: 0;
+      margin-top: 12px;
+    }
+    table.fees-status-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.98em;
+      background: #fff;
+      min-width: 940px;
+      margin: 0;
+    }
+    .fees-status-table th, .fees-status-table td {
+      padding: 9px 7px;
+      border: 1.2px solid #b7d0f9;
+      text-align: center;
+      word-break: break-word;
+    }
+    .fees-status-table th {
+      background: #eaf2ff;
+      color: #18317c;
+      font-weight: 600;
+      user-select:none;
+    }
+    .fees-status-table tr.paid { background: #eaffea; }
+    .fees-status-table tr.partial { background: #fffbe0; }
+    .fees-status-table tr.unpaid { background: #fdeded; }
+    .loader {
+      display: inline-block;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 4px solid #ddeef8;
+      border-top-color: #384fe8;
+      animation: spin 1s linear infinite;
+      margin: 17px auto 0 auto;
+    }
+    @keyframes spin { 100% { transform:rotate(360deg);} }
+
+    /* Receipts Modal style */
+    #receiptsModalOverlay {
+      display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;
+      background:rgba(20,30,55,0.89);align-items:center;justify-content:center;
+    }
+    #receiptsModalContent {
+      background:#fff;max-width:480px;width:96vw;margin:auto;border-radius:15px;
+      box-shadow:0 8px 30px #2d4df99e;position:relative;padding:28px 20px 18px 20px;
+      animation:fadeIn .27s cubic-bezier(.24, 2.22, .82, .98);
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+    @keyframes fadeIn {0%{transform:scale(0.94);opacity:0}100%{transform:scale(1);opacity:1}}
+    #receiptsModalContent table {
+      width: 100%; border-collapse:collapse; font-size:0.97em; margin-top:9px;
+    }
+    #receiptsModalContent th, #receiptsModalContent td {
+      border:1px solid #bad4ff;font-size:0.97em;padding:6px 4px;
+      word-break: break-word;
+    }
+    #receiptsModalContent th { background:#eaf2ff; user-select:none; }
+    #receiptsModalContent button {
+      padding:4px 7px;color:#384fe8;background:#eaf2ff;
+      border-radius:5px;border:1px solid #bad4ff;font-size:0.95em;cursor:pointer;
+      user-select:none;
+    }
+    #receiptsModalContent button:hover {
+      background:#dbe9ff;
+    }
+    #receiptsModalContent .closebtn {
+      position:absolute;right:13px;top:11px;font-size:1.5rem;background:none;border:none;cursor:pointer;
+      user-select:none;
+    }
+    @media (max-width:850px){
+      main {padding:12px 4vw;}
+      table.fees-status-table { font-size:0.94em;}
+      h2 {font-size:1.2em;}
+      #downloadReceiptResult { font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Headerbar -->
+  <div class="headerbar">
+    <div class="logo">
+      <img src="https://res.cloudinary.com/drax7i59f/image/upload/v1756808196/U11_yv2fcp.png" alt="Logo" class="logoimg" />
+      <span class="uc-title">UConnect</span>
+    </div>
+    <span class="moduletitle">
+      <span class="material-symbols-outlined" style="font-size:1.3em;">payments</span>
+      Fees Status & Receipt Download
+    </span>
+  </div>
+
+  <!-- Receipt Download Card -->
+  <div class="download-receipt-card" role="region" aria-label="Download Receipt">
+    <div>
+      <span class="material-symbols-outlined" aria-hidden="true" style="color:#384fe8;font-size:2.1rem;">
+        receipt_long
+      </span>
+      <b style="font-size:1.1em;letter-spacing:.7px;">Download Receipt</b>
+    </div>
+    <form id="downloadReceiptForm" autocomplete="off" aria-label="Download receipt form">
+      <input
+        type="text"
+        id="downloadReceiptId"
+        required
+        aria-required="true"
+        placeholder="Enter Receipt ID"
+        aria-describedby="downloadReceiptHelp"
+        style="flex:1 1 160px; padding:7.5px; font-size:1em; border-radius:6px; border:1.1px solid #bacafd;"
+      />
+      <button type="submit" aria-label="View receipt">View</button>
+    </form>
+    <div id="downloadReceiptResult" role="alert" aria-live="polite" style="display:none; margin-top:8px; background:#f3f7fb; border-radius:7px; padding:9px 11px; font-size:1em; min-height:30px; color:#18317c; white-space: pre-line; word-wrap: break-word;"></div>
+    <button id="downloadReceiptBtn" type="button" style="display:none; margin-top:10px;">Download PDF</button>
+  </div>
+
+  <main>
+    <h2><span class="material-symbols-outlined">payments</span> Student Fees Status</h2>
+    <div class="search-row">
+      <input type="text" id="studentSearch" aria-label="Search student name or ID" placeholder="Search by student name or ID..." />
+      <button id="refreshBtn" aria-label="Refresh fees status table">Refresh</button>
+    </div>
+    <div class="status-table-scroll" role="region" aria-live="polite" aria-busy="true" aria-atomic="true">
+      <div id="feesStatusTableBox" style="min-height:120px;padding:22px;text-align:center;">
+        <div class="loader" aria-hidden="true"></div>
+        <span style="margin-left:11px;color:#384fe8;">Loading fees status...</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- Receipts Modal -->
+  <div id="receiptsModalOverlay" role="dialog" aria-modal="true" aria-labelledby="receiptsModalTitle" aria-describedby="receiptsModalDescription" tabindex="-1">
+    <div id="receiptsModalContent">
+      <button class="closebtn" onclick="closeReceiptsModal()" aria-label="Close receipts modal">×</button>
+      <h2 id="receiptsModalTitle" style="color:#384fe8;font-size:1.22em;margin-bottom:9px;">Receipts</h2>
+      <div id="receiptsModalTable" aria-live="polite" aria-atomic="true" aria-relevant="additions"></div>
+    </div>
+  </div>
+
+  <script>
+    // ==== INSERT YOUR FIREBASE CONFIGURATION HERE ====
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBjiKldk4Q-J8dEbhBd6FTGyPb-TQoGadE",
+  authDomain: "st-fees.firebaseapp.com",
+  projectId: "st-fees",
+  storageBucket: "st-fees.firebasestorage.app",
+  messagingSenderId: "865723388538",
+  appId: "1:865723388538:web:e49e6bde9ff7023aae61c3",
+  measurementId: "G-Y9WQXHKTX4"
+};
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Download Receipt elements
+    const downloadForm = document.getElementById("downloadReceiptForm");
+    const downloadReceiptIdInput = document.getElementById("downloadReceiptId");
+    const downloadResult = document.getElementById("downloadReceiptResult");
+    const downloadBtn = document.getElementById("downloadReceiptBtn");
+
+    let currentDownloadReceipt = null;
+
+    downloadForm.onsubmit = async function (e) {
+      e.preventDefault();
+      downloadBtn.style.display = "none";
+      const rid = downloadReceiptIdInput.value.trim();
+      downloadResult.style.display = "block";
+      downloadResult.textContent = "Searching...";
+      if (!rid) {
+        downloadResult.style.color = "#df2727";
+        downloadResult.textContent = "Please enter a Receipt ID.";
+        return;
+      }
+      try {
+        const doc = await db.collection('receipts').doc(rid).get();
+        if (!doc.exists) {
+          downloadResult.style.color = "#df2727";
+          downloadResult.textContent = "❌ Receipt not found or invalid ID.";
+          return;
+        }
+        const r = doc.data();
+        currentDownloadReceipt = { ...r, receiptId: rid };
+        downloadResult.style.color = "#18317c";
+        downloadResult.innerHTML =
+          `<b>Receipt ID:</b> ${rid}<br/>
+           <b>Student Name:</b> ${r.studentName || "-"}<br/>
+           <b>Student ID:</b> ${r.studentId || "-"}<br/>
+           <b>Fee Type:</b> ${r.feeType || "-"}<br/>
+           <b>Academic Year:</b> ${r.academicYear || "-"}<br/>
+           <b>Amount:</b> ₹${r.amount || "-"}<br/>
+           <b>Paid On:</b> ${r.date || "-"}<br/>
+           <b>Razorpay Payment ID:</b> ${(r.razorpayPaymentId || "-")}`;
+        downloadBtn.style.display = "block";
+        downloadBtn.focus();
+      } catch (err) {
+        downloadResult.style.color = "#c21b2e";
+        downloadResult.textContent = "❌ Error: " + err.message;
+      }
+    };
+
+    // PDF Download logic
+    downloadBtn.onclick = function () {
+      const { jsPDF } = window.jspdf;
+      const r = currentDownloadReceipt;
+      if (!r) return;
+      let doc = new jsPDF();
+      doc.setFontSize(16); doc.text("Payment Receipt", 12, 22);
+      doc.setFontSize(12);
+      let y = 36;
+      for (let [label, value] of [
+        ["Receipt ID", r.receiptId],
+        ["Student Name", r.studentName],
+        ["Student ID", r.studentId],
+        ["Fee Type", r.feeType],
+        ["Academic Year", r.academicYear],
+        ["Amount", "₹" + r.amount],
+        ["Paid On", r.date],
+        ["Razorpay Payment ID", r.razorpayPaymentId || "-"]
+      ]) {
+        doc.text(`${label}: ${value}`, 12, y);
+        y += 11;
+      }
+      doc.save(`Receipt_${r.receiptId}.pdf`);
+    };
+
+    // Fees Status elements and functions
+    const feesStatusBox = document.getElementById("feesStatusTableBox");
+    const searchInput = document.getElementById("studentSearch");
+    const refreshBtn = document.getElementById("refreshBtn");
+
+    function getRowClass(status) {
+      if (status === "paid") return "paid";
+      if (status === "partial") return "partial";
+      return "unpaid";
+    }
+
+    async function loadFeesStatus(search = '') {
+      feesStatusBox.innerHTML =
+        '<div class="loader" aria-hidden="true"></div><span style="margin-left:11px;">Loading fees status...</span>';
+      try {
+        const [studentsSnap, duesSnap, receiptsSnap] = await Promise.all([
+          db.collection('students').get(),
+          db.collection('dues').get(),
+          db.collection('receipts').get()
+        ]);
+        let students = {};
+        studentsSnap.forEach(doc => students[doc.id] = doc.data());
+        let duesMap = {}, receiptsMap = {};
+        duesSnap.forEach(doc => duesMap[doc.id] = doc.data().duesList || []);
+        receiptsSnap.forEach(doc => {
+          let d = doc.data();
+          if (!receiptsMap[d.studentId]) receiptsMap[d.studentId] = [];
+          receiptsMap[d.studentId].push({ ...d, receiptId: doc.id });
+        });
+        let filteredIds = Object.keys(students).filter(id => {
+          let sd = students[id];
+          return (
+            !search ||
+            id.toLowerCase().includes(search.toLowerCase()) ||
+            (sd.name || '').toLowerCase().includes(search.toLowerCase())
+          );
+        });
+        let html = `<table class="fees-status-table" role="table" aria-label="Student fees status table">
+          <thead>
+            <tr>
+              <th>Name</th><th>Student ID</th><th>Type</th>
+              <th>Year</th><th>Total</th><th>Paid</th><th>Remain.</th>
+              <th>Status</th><th>Last Paid On</th><th>Receipts</th>
+            </tr>
+          </thead>
+          <tbody>`;
+        let found = 0;
+        for (const id of filteredIds) {
+          const stu = students[id];
+          const dues = duesMap[id] || [];
+          for (const due of dues) {
+            const recs = (receiptsMap[id] || []).filter(r => r.feeType === due.feeType && r.academicYear === due.academicYear);
+            const lastPay = recs.length ? recs[recs.length - 1].date : "-";
+            const status =
+              due.status ||
+              ((due.amountPaid || 0) === (due.amount || 0) ? "paid"
+                : (due.amountPaid > 0 ? "partial" : "unpaid"));
+            html += `<tr class="${getRowClass(status)}">
+              <td>${stu.name || '-'}</td>
+              <td>${id}</td>
+              <td>${due.feeType}</td>
+              <td>${due.academicYear}</td>
+              <td>₹${due.amount || '-'}</td>
+              <td>₹${due.amountPaid || '0'}</td>
+              <td>₹${due.remaining !== undefined ? due.remaining : ((due.amount || 0) - (due.amountPaid || 0))}</td>
+              <td>${status.toUpperCase()}</td>
+              <td>${lastPay || '-'}</td>
+              <td>
+                <button style="font-size:0.96em;padding:2px 7px;background:#eaf2ff;"
+                  onclick="showReceipts('${id}', '${due.feeType}', '${due.academicYear}')"
+                  aria-label="Show receipts for ${stu.name}, ${due.feeType} (${due.academicYear})"
+                >Show</button>
+              </td>
+            </tr>`;
+            found++;
+          }
+        }
+        if (found === 0) {
+          html += `<tr><td colspan="10" style="color:#cb3d76;text-align:center;">No students found for your search.</td></tr>`;
+        }
+        html += '</tbody></table>';
+        feesStatusBox.innerHTML = html;
+      } catch (err) {
+        feesStatusBox.innerHTML = `<div style="color:#c21b2e;">❌ Error: ${err.message || err}</div>`;
+      }
+    }
+
+    // ----- Receipts Modal Logic -----
+    window.showReceipts = async function (studentId, feeType, academicYear) {
+      const overlay = document.getElementById('receiptsModalOverlay');
+      const tableDiv = document.getElementById('receiptsModalTable');
+      overlay.style.display = "flex";
+      tableDiv.innerHTML = '<div style="padding:13px;">Loading...</div>';
+      try {
+        const receiptsSnap = await db.collection('receipts')
+          .where('studentId', '==', studentId)
+          .where('feeType', '==', feeType)
+          .where('academicYear', '==', academicYear)
+          .get();
+        let rows = [];
+        receiptsSnap.forEach(doc => {
+          const d = doc.data();
+          rows.push({
+            id: doc.id,
+            amount: d.amount,
+            date: d.date || '-',
+            paymentId: d.razorpayPaymentId || '-'
+          });
+        });
+        if (rows.length === 0) {
+          tableDiv.innerHTML = "<div style='padding:16px;color:#c21b2e;'>No receipts found for this due.</div>";
+        } else {
+          let html = `<table role="grid" aria-label="Receipts table">
+            <thead><tr style='background:#eaf2ff;'>
+              <th>Receipt ID</th>
+              <th>Amount</th>
+              <th>Date</th>
+              <th>Razorpay ID</th>
+              <th>Action</th>
+            </tr></thead><tbody>`;
+          rows.forEach(r => {
+            html += `<tr>
+              <td>${r.id}</td>
+              <td>₹${r.amount}</td>
+              <td>${r.date}</td>
+              <td style="font-size:0.9em">${r.paymentId}</td>
+              <td>
+                <button onclick="viewReceiptDetail('${r.id}')" aria-label="View receipt ${r.id} details">View</button>
+              </td>
+            </tr>`;
+          });
+          html += "</tbody></table>";
+          tableDiv.innerHTML = html;
+        }
+      } catch (err) {
+        tableDiv.innerHTML = "<div style='padding:16px;color:#c21b2e;'>Error loading receipts: " + err.message + "</div>";
+      }
+    };
+
+    function closeReceiptsModal() {
+      document.getElementById('receiptsModalOverlay').style.display = "none";
+    }
+
+    // Individual receipt details (opens alert, can be modalized further)
+    window.viewReceiptDetail = async function (receiptId) {
+      try {
+        const doc = await db.collection('receipts').doc(receiptId).get();
+        if (!doc.exists) return alert("Receipt not found.");
+        const r = doc.data();
+        alert(
+          `Receipt ID: ${receiptId}
+Student Name: ${r.studentName}
+Student ID: ${r.studentId}
+Fee Type: ${r.feeType}
+Academic Year: ${r.academicYear}
+Amount: ₹${r.amount}
+Date: ${r.date}
+Razorpay Payment ID: ${r.razorpayPaymentId || ""}`
+        );
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+    };
+
+    // Event listeners
+    searchInput.addEventListener("input", () => {
+      loadFeesStatus(searchInput.value);
+    });
+    refreshBtn.addEventListener("click", () => {
+      loadFeesStatus(searchInput.value);
+    });
+
+    // Initial load at page start
+    loadFeesStatus();
+
+  </script>
+</body>
+</html>

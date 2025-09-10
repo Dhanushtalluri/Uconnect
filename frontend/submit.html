@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Submit Solution - Practical Knowledge Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { background-color: #f8faff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-top: 60px; color: #1a237e; min-height: 100vh; }
+    .header { background-color: #1a237e; color: white; padding: 1rem; position: fixed; top: 0; left: 0; right: 0; z-index: 1030; }
+    .header h1 { margin: 0; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <header class="header d-flex justify-content-center align-items-center">
+    <h1>Submit Your Solution</h1>
+  </header>
+
+  <main class="container my-5" style="max-width: 600px; margin-top: 80px;">
+    <form id="solutionForm" class="p-4 bg-white rounded shadow-sm">
+      <div class="mb-3">
+        <label for="studentName" class="form-label">Your Name</label>
+        <input type="text" class="form-control" id="studentName" placeholder="Enter your full name" required />
+      </div>
+      <div class="mb-3">
+        <label for="studentEmail" class="form-label">Email address</label>
+        <input type="email" class="form-control" id="studentEmail" placeholder="name@example.com" required />
+      </div>
+      <div class="mb-3">
+        <label for="rollNumber" class="form-label">Roll Number</label>
+        <input type="text" class="form-control" id="rollNumber" placeholder="Enter your roll number" required />
+      </div>
+      <div class="mb-3">
+        <label for="challengeTitle" class="form-label">Challenge Title</label>
+        <input type="text" class="form-control" id="challengeTitle" placeholder="Challenge you are submitting for" required />
+      </div>
+      <div class="mb-3">
+        <label for="solutionLink" class="form-label">Solution URL (GitHub or Live Demo)</label>
+        <input type="url" class="form-control" id="solutionLink" placeholder="https://github.com/your_repo" required />
+      </div>
+      <div class="mb-3">
+        <label for="additionalNotes" class="form-label">Additional Notes (Optional)</label>
+        <textarea class="form-control" id="additionalNotes" rows="3" placeholder="Any notes about your submission"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Submit Solution</button>
+      <div id="formAlert" class="alert mt-3 d-none" role="alert"></div>
+    </form>
+  </main>
+
+  <!-- Firebase JS SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBjiKldk4Q-J8dEbhBd6FTGyPb-TQoGadE",
+      authDomain: "st-fees.firebaseapp.com",
+      projectId: "st-fees",
+      storageBucket: "st-fees.firebasestorage.app",
+      messagingSenderId: "865723388538",
+      appId: "1:865723388538:web:e49e6bde9ff7023aae61c3",
+      measurementId: "G-Y9WQXHKTX4"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Form elements
+    const form = document.getElementById('solutionForm');
+    const alertBox = document.getElementById('formAlert');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      alertBox.classList.add('d-none');
+      alertBox.classList.remove('alert-success', 'alert-danger');
+
+      // Get form values
+      const name = document.getElementById('studentName').value.trim();
+      const email = document.getElementById('studentEmail').value.trim();
+      const rollNumber = document.getElementById('rollNumber').value.trim();
+      const challenge = document.getElementById('challengeTitle').value.trim();
+      const solutionURL = document.getElementById('solutionLink').value.trim();
+      const notes = document.getElementById('additionalNotes').value.trim();
+
+      if (!name || !email || !rollNumber || !challenge || !solutionURL) {
+        showAlert('Please fill in all required fields.', 'danger');
+        return;
+      }
+
+      // Use Roll Number as Document ID
+      db.collection('solutions')
+        .doc(rollNumber)
+        .set({
+          name,
+          email,
+          rollNumber,
+          challenge,
+          solutionURL,
+          notes,
+          submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        .then(() => {
+          form.reset();
+          showAlert('Solution submitted successfully! Thank you.', 'success');
+        })
+        .catch((error) => {
+          console.error('Error submitting solution: ', error);
+          showAlert('Failed to submit solution. Please try again later.', 'danger');
+        });
+    });
+
+    function showAlert(message, type) {
+      alertBox.textContent = message;
+      alertBox.classList.remove('d-none');
+      alertBox.classList.add(`alert-${type}`);
+      setTimeout(() => {
+        alertBox.classList.add('d-none');
+      }, 5000);
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

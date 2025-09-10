@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Results PDF</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f9;
+    padding: 30px;
+  }
+  h1 {
+    text-align: center;
+    color: #333;
+  }
+  .upload-box {
+    max-width: 500px;
+    margin: 0 auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    text-align: center;
+  }
+  input[type=file] {
+    margin: 15px 0;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    width: 100%;
+  }
+  button {
+    padding: 12px 18px;
+    background: #287bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  button:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+  }
+  #status {
+    margin-top: 20px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<h1>Upload Result PDFs</h1>
+<div class="upload-box">
+  <form id="uploadForm">
+    <input type="file" id="pdfFiles" name="pdfs" multiple accept="application/pdf">
+    <br>
+    <button type="submit" id="uploadBtn" disabled>Upload & Analyze</button>
+  </form>
+  <div id="status"></div>
+</div>
+
+<script>
+  const pdfFiles = document.getElementById("pdfFiles");
+  const uploadBtn = document.getElementById("uploadBtn");
+  const statusDiv = document.getElementById("status");
+
+  pdfFiles.addEventListener("change", () => {
+    uploadBtn.disabled = pdfFiles.files.length === 0;
+    statusDiv.textContent = "";
+  });
+
+  document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (pdfFiles.files.length === 0) {
+      alert("Please select at least one PDF file.");
+      return;
+    }
+
+    const formData = new FormData();
+    for (let i = 0; i < pdfFiles.files.length; i++) {
+      formData.append("pdfs", pdfFiles.files[i], pdfFiles.files[i].name);
+    }
+
+    statusDiv.textContent = "Uploading... Please wait.";
+    uploadBtn.disabled = true;
+
+    try {
+      // 🔴 Replace with your Make.com webhook URL
+      const webhookUrl = "https://hook.eu2.make.com/syqwx36cocwys892trwx2a582v6k8vjf";
+
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        body: formData
+      });
+
+      if (!response.ok) throw new Error("Upload failed.");
+
+      statusDiv.textContent = "✅ Upload successful! Processing results...";
+    } catch (err) {
+      statusDiv.textContent = "❌ Error: " + err.message;
+    } finally {
+      uploadBtn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>

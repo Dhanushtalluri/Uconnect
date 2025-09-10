@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>UConnect - Teacher Notification</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Firebase Modular v10+ -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f2f6fb;
+      margin: 0;
+      min-height: 100vh;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      background: #21294c;
+      color: #fff;
+      padding: 10px 18px 10px 12px;
+      box-shadow: 0 2px 10px #4153aa1a;
+      gap: 12px;
+    }
+    .home-link {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      color: #fff;
+      font-size: 1.24rem;
+      transition: color 0.15s;
+      font-weight: 500;
+    }
+    .home-link:hover { color: #f7b731; }
+    .home-link svg {
+      width: 27px; height: 27px; margin-right: 7px; fill: #fff; vertical-align: middle;
+      transition: fill 0.18s;
+    }
+    .logo {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      margin-left: 8px;
+    }
+    .title {
+      font-size: 1.48rem;
+      font-weight: bold;
+      letter-spacing: 1.7px;
+      margin-left: 9px;
+      color: #f7b731;
+    }
+    main {
+      max-width: 430px;
+      background: #fff;
+      margin: 34px auto;
+      border-radius: 13px;
+      box-shadow: 0 6px 26px #afcbfa3a;
+      padding: 28px 20px;
+    }
+    h2 { color: #384fe8; margin-bottom: 24px;}
+    label { font-weight: 600; display:block; margin-bottom:7px;}
+    input, textarea, select, button {
+      width: 100%; font-size: 1rem; border-radius: 7px; border: 1.3px solid #bad1fd;
+      margin-bottom: 16px; padding: 10px; font-family: inherit; box-sizing: border-box;
+    }
+    textarea { min-height: 54px; resize: vertical;}
+    button {
+      background: #384fe8; color: #fff; font-weight:700; border:none;
+      cursor:pointer; transition: background 0.18s; user-select: none;
+      font-size: 1.05rem; padding: 12px 0; margin-bottom: 0;
+    }
+    button:hover:not(:disabled) { background: #2a3fd3;}
+    button:disabled { background: #b9cdfb;}
+    .status {
+      min-height: 22px; color: #c13d2b; font-weight:600; text-align: center;
+      font-size: 1rem; margin-bottom: 8px;
+    }
+    @media (max-width:500px) {
+      header { padding:8px 5vw 8px 2vw; }
+      main { max-width: 99vw; padding: 13px 3vw;}
+      .logo { width:34px; height:34px;}
+      .title { font-size: 1.05rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="teacher.html" class="home-link" aria-label="Home">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      Home
+    </a>
+    <img class="logo" src="https://res.cloudinary.com/drax7i59f/image/upload/v1756808196/U11_yv2fcp.png" alt="UConnect Logo" />
+    <div class="title">U Connect</div>
+  </header>
+  <main>
+    <h2>Teacher — Send Notification</h2>
+    <form id="notifyForm" autocomplete="off">
+      <label for="notifTitle">Title *</label>
+      <input type="text" id="notifTitle" maxlength="80" required placeholder="e.g. AP Exam Tomorrow" />
+
+      <label for="notifMsg">Message *</label>
+      <textarea id="notifMsg" maxlength="500" required placeholder="Type your notification message here"></textarea>
+
+      <label for="notifTo">Send To *</label>
+      <select id="notifTo" required>
+        <option value="all">All Students</option>
+        <option value="student1">Student 1 (student1)</option>
+        <option value="student2">Student 2 (student2)</option>
+        <option value="student3">Student 3 (student3)</option>
+        <!-- Populate dynamically in production -->
+      </select>
+      <button type="submit">Send Notification</button>
+      <div id="notifStatus" class="status"></div>
+    </form>
+  </main>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  // Replace with your config:
+ // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBjiKldk4Q-J8dEbhBd6FTGyPb-TQoGadE",
+  authDomain: "st-fees.firebaseapp.com",
+  projectId: "st-fees",
+  storageBucket: "st-fees.firebasestorage.app",
+  messagingSenderId: "865723388538",
+  appId: "1:865723388538:web:e49e6bde9ff7023aae61c3",
+  measurementId: "G-Y9WQXHKTX4"
+};
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const notifyForm = document.getElementById('notifyForm');
+  const notifStatus = document.getElementById('notifStatus');
+  notifyForm.onsubmit = async (e) => {
+    e.preventDefault();
+    notifStatus.style.color = "#2a3fd3";
+    notifStatus.textContent = "Sending...";
+    const title = document.getElementById('notifTitle').value.trim();
+    const message = document.getElementById('notifMsg').value.trim();
+    const to = document.getElementById('notifTo').value;
+    if (!title || !message || !to) {
+      notifStatus.style.color = "red";
+      notifStatus.textContent = "Please complete all the fields.";
+      return;
+    }
+    try {
+      await addDoc(collection(db, "notifications"), {
+        title, message, to,
+        timestamp: serverTimestamp()
+      });
+      notifStatus.style.color = "green";
+      notifStatus.textContent = "✅ Notification sent!";
+      notifyForm.reset();
+      document.getElementById('notifTo').value = "all";
+    } catch (err) {
+      notifStatus.style.color = "red";
+      notifStatus.textContent = "Error: " + err.message;
+    }
+  }
+</script>
+</body>
+</html>
