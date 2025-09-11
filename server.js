@@ -7,13 +7,26 @@ const path = require('path');
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// CORS options - replace with your frontend deployed URL
+const corsOptions = {
+  origin: process.env.ALLOWED_ORIGIN || '*', // For dev use '*', in prod use your frontend URL like 'https://yourfrontend.onrender.com'
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 204,
+};
+app.use(cors(corsOptions));
+
+// Handle preflight OPTIONS requests
+app.options('*', cors(corsOptions));
+
 app.use(express.json());
 
-// Serve static files from 'public' folder
+// Serve static files from the 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Default route → welcome.html
+// Default route to serve welcome.html
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'welcome.html'));
 });
