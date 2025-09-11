@@ -8,25 +8,23 @@ dotenv.config();
 
 const app = express();
 
-// CORS options - replace with your frontend deployed URL
+// CORS setup
 const corsOptions = {
-  origin: process.env.ALLOWED_ORIGIN || '*', // For dev use '*', in prod use your frontend URL like 'https://yourfrontend.onrender.com'
+  origin: process.env.ALLOWED_ORIGIN || '*',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
   optionsSuccessStatus: 204,
 };
 app.use(cors(corsOptions));
-
-// Handle preflight OPTIONS requests
 app.options('*', cors(corsOptions));
 
 app.use(express.json());
 
-// Serve static files from the 'public' folder
+// Serve static files from /public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Default route to serve welcome.html
+// Root route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'welcome.html'));
 });
@@ -202,15 +200,11 @@ Always answer student queries based on this information. If not found, say: "Sor
 app.post('/chat', async (req, res) => {
   try {
     const { messages, model } = req.body;
-
-    const fullMessages = [collegeContext, ...messages]; // add context at the top
+    const fullMessages = [collegeContext, ...messages];
 
     const response = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
-      {
-        model,
-        messages: fullMessages,
-      },
+      { model, messages: fullMessages },
       {
         headers: {
           Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
@@ -221,6 +215,7 @@ app.post('/chat', async (req, res) => {
 
     res.json(response.data);
   } catch (error) {
+    console.error("Chat API error:", error.message);
     res.status(500).json({
       error: 'Something went wrong',
       details: error.message,
@@ -228,6 +223,6 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-// Dynamic port for Render deployment
+// Dynamic port
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
