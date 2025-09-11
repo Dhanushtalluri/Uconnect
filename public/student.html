@@ -11,33 +11,31 @@
       --card-color: #ffffff;
       --text-color: #333;
     }
-
     body.dark-mode {
       --bg-color: #1e1e2f;
       --card-color: #2c2c3e;
       --text-color: #f0f0f0;
     }
-
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
       font-family: 'Inter', sans-serif;
     }
-
     body {
       background-color: var(--bg-color);
       color: var(--text-color);
       transition: background-color 0.3s ease, color 0.3s ease;
+      min-height: 100vh;
     }
-
     .dashboard {
       display: flex;
-      height: 100vh;
+      min-height: 100vh;
+      flex-direction: row;
     }
-
     .sidebar {
       width: 80px;
+      min-width: 80px;
       background: linear-gradient(160deg, #03268f, #93a3d4);
       color: white;
       padding: 20px 10px;
@@ -48,13 +46,11 @@
       border-bottom-left-radius: 20px;
       box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
     }
-
     .nav-section {
       display: flex;
       flex-direction: column;
       gap: 15px;
     }
-
     .sidebar-item {
       display: flex;
       justify-content: center;
@@ -64,21 +60,18 @@
       cursor: pointer;
       transition: background 0.3s ease;
     }
-
     .sidebar-item:hover {
       background: rgba(255, 255, 255, 0.1);
     }
-
     .sidebar-item img {
       width: 30px;
       filter: brightness(0) invert(1);
     }
-
     .theme-toggle {
       display: flex;
       justify-content: center;
+      margin-bottom: 10px;
     }
-
     .toggle-theme {
       background: white;
       color: #b65220;
@@ -90,31 +83,42 @@
       font-size: 10px;
       transition: background 0.3s, color 0.3s;
     }
-
     .toggle-theme:hover {
       background: #ece9ff;
     }
-
     .main-content {
       flex: 1;
       padding: 30px;
       display: flex;
       flex-direction: column;
+      min-width: 0;
     }
-
     .header {
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 30px;
+      gap: 1rem;
     }
-
+    .header h1 {
+      font-size: 2rem;
+      line-height: 1.2;
+      flex: 1 1 100%;
+    }
+    .header input[type="text"] {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      min-width: 150px;
+      margin-left: auto;
+    }
     .cards-container {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 20px;
     }
-
     .card {
       background: var(--card-color);
       border-radius: 20px;
@@ -123,47 +127,111 @@
       transition: transform 0.3s ease, background 0.3s;
       text-align: center;
       cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-
     .card:hover {
       transform: translateY(-5px);
     }
-
-    .card h2 {
+    .card h2, .card h3 {
       font-size: 18px;
-      margin: 10px 0;
+      margin: 10px 0 6px 0;
     }
-
     .card p {
       font-size: 14px;
       color: var(--text-color);
+      margin-bottom: 0;
     }
-
     .card img {
       width: 100%;
-      height: 150px;
+      height: 130px;
       object-fit: cover;
       border-radius: 12px;
       margin-bottom: 10px;
+      max-width: 220px;
+      max-height: 130px;
     }
     footer {
-  background: var(--card-color);
-  text-align: center;
-  padding: 15px 0;
-  font-size: 14px;
-  color: var(--text-color);
-  border-top: 1px solid #ccc;
-  border-bottom-left-radius: 20px;
-}
+      background: var(--card-color);
+      text-align: center;
+      padding: 15px 0;
+      font-size: 14px;
+      color: var(--text-color);
+      border-top: 1px solid #ccc;
+      border-bottom-left-radius: 20px;
+    }
+
+    /* MOBILE STYLES */
+    @media (max-width: 850px) {
+      .dashboard {
+        flex-direction: column;
+      }
+      .sidebar {
+        flex-direction: row;
+        width: 100%;
+        min-width: unset;
+        padding: 10px 5px;
+        border-radius: 0;
+        border-top-left-radius: 18px;
+        border-top-right-radius: 18px;
+        box-shadow: 0 3px 18px rgba(0,0,0,0.10);
+        justify-content: flex-start;
+        align-items: center;
+        gap: 18px;
+      }
+      .nav-section {
+        flex-direction: row;
+        gap: 8px;
+      }
+      .sidebar-item {
+        padding: 8px;
+        margin: 0 2px;
+      }
+      .theme-toggle {
+        margin-left: auto;
+        margin-bottom: 0;
+      }
+      .main-content {
+        padding: 16px;
+      }
+      .cards-container {
+        grid-template-columns: 1fr 1fr;
+        gap: 13px;
+      }
+      .header h1 {
+        font-size: 1.35rem;
+      }
+    }
+    @media (max-width: 540px) {
+      .sidebar {
+        padding: 5px 2px;
+      }
+      .cards-container {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .card img {
+        height: 110px;
+        max-width: 100%;
+      }
+      .main-content {
+        padding: 10px 3px;
+      }
+      .header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+      }
+    }
   </style>
 </head>
-
 <body>
   <div class="dashboard">
     <div class="sidebar">
       <div class="nav-section">
         <div class="sidebar-item" onclick="openChatBot()">
-          <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNCIgaGVpZ2h0PSIxNCIgdmlld0JveD0iMCAwIDE0IDE0Ij48cGF0aCBmaWxsPSJjdXJyZW50Q29sb3IiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTQuNTIyLjY4M0EuNjI1LjYyNSAwIDAgMCAzLjgzNC4xM3EtLjU0MS4wNTktMS4wNjkuMTJsLS4xMjQuMDE1QTIuNzE2IDIuNzE2IDAgMCAwIC4yNTkgMi42NTFsLS4wMDMuMDNRLjE5IDMuMjUuMTI5IDMuODM5YS42MjUuNjI1IDAgMSAwIDEuMjQ0LjEyOXEuMDYtLjU3OC4xMjUtMS4xNWwuMDAzLS4wMjdhMS40NjYgMS40NjYgMCAwIDEgMS4yODQtMS4yODVsLjEyNC0uMDE1bDEuMDU5LS4xMmEuNjI1LjYyNSAwIDAgMCAuNTU0LS42ODhtNC45NTcgMGEuNjI1LjYyNSAwIDAgMSAuNjg4LS41NTRxLjU0LjA1OSAxLjA2OC4xMmwuMTI1LjAxNWEyLjcxNiAyLjcxNiAwIDAgMSAyLjM4MSAyLjM4N2wuMDA0LjAzcS4wNjUuNTcuMTI2IDEuMTU4YS42MjUuNjI1IDAgMCAxLTEuMjQzLjEyOXEtLjA2LS41NzgtLjEyNi0xLjE1bC0uMDAzLS4wMjdhMS40NjYgMS40NjYgMCAwIDAtMS4yODMtMS4yODVsLS4xMjQtLjAxNWwtMS4wNi0uMTJBLjYyNS42MjUgMCAwIDEgOS40OC42ODNNNyAxLjU2NWMtLjM3NyAwLS43MjUuMTA3LS45NzcuMzZjLS4yNTMuMjUyLS4zNi42LS4zNi45NzdzLjEwNy43MjQuMzYuOTc3cS4xNTUuMTU0LjM1My4yNHYuNjY5Yy0uNTkyLjAwNS0xLjE5Ni4wMjMtMS43NTIuMDk2YTEuNzggMS43OCAwIDAgMC0xLjUzOSAxLjUwMmMtLjA2Mi40MjktLjA2Mi44NjMtLjA2MiAxLjUzNXYuMDUzYzAgLjY3MyAwIDEuMTA3LjA2MiAxLjUzNmExLjc4IDEuNzggMCAwIDAgMS41MzkgMS41MDJjLjc1LjA5NyAxLjU4Ni4wOTcgMi4zNjMuMDk3aC4wMjhjLjc3NyAwIDEuNjE0IDAgMi4zNjMtLjA5N2ExLjc4IDEuNzggMCAwIDAgMS41MzgtMS41MDJjLjA2My0uNDMuMDYzLS44NjMuMDYzLTEuNTM2di0uMDUzYzAtLjY3MiAwLTEuMTA2LS4wNjMtMS41MzVhMS43OCAxLjc4IDAgMCAwLTEuNTM4LTEuNTAyYTE1IDE1IDAgMCAwLTEuNzUyLS4wOTZ2LS42N3EuMTk2LS4wODUuMzUxLS4yMzljLjI1My0uMjUzLjM2LS42LjM2LS45NzdzLS4xMDctLjcyNS0uMzYtLjk3N2MtLjI1My0uMjUzLS42LS4zNi0uOTc3LS4zNk04LjMgNy4xM2EuNjI1LjYyNSAwIDAgMC0uNjI1LjYyNXYuMzg3YS42MjUuNjI1IDAgMCAwIDEuMjUgMHYtLjM4N0EuNjI1LjYyNSAwIDAgMCA4LjMgNy4xM20tMy4yMjMuNjI1YS42MjUuNjI1IDAgMSAxIDEuMjUgMHYuMzg3YS42MjUuNjI1IDAgMSAxLTEuMjUgMHptNS4wOSA2LjExN2EuNjI1LjYyNSAwIDAgMS0uMTMzLTEuMjQzbDEuMDU5LS4xMmwuMTI0LS4wMTVBMS40NjYgMS40NjYgMCAwIDAgMTIuNSAxMS4yMWwuMDAzLS4wMjhxLjA2NS0uNTcxLjEyNi0xLjE1YS42MjUuNjI1IDAgMSAxIDEuMjQzLjEyOXEtLjA2Mi41ODctLjEyNiAxLjE1OWwtLjAwNC4wMjlhMi43MTYgMi43MTYgMCAwIDEtMi4zODEgMi4zODdsLS4xMjQuMDE0cS0uNTI4LjA2My0xLjA3LjEyMm0tNi4zMzIgMGEuNjI1LjYyNSAwIDAgMCAuMTM0LTEuMjQzbC0xLjA1OS0uMTJsLS4xMjQtLjAxNUExLjQ2NiAxLjQ2NiAwIDAgMSAxLjUgMTEuMjFsLS4wMDMtLjAyOHEtLjA2NS0uNTcxLS4xMjUtMS4xNWEuNjI1LjYyNSAwIDEgMC0xLjI0NC4xMjlxLjA2MS41ODcuMTI3IDEuMTU5bC4wMDMuMDI5YTIuNzE2IDIuNzE2IDAgMCAwIDIuMzgyIDIuMzg3bC4xMjQuMDE0cS41MjcuMDYzIDEuMDY5LjEyMSIgY2xpcC1ydWxlPSJldmVub2RkIi8+PC9zdmc+" alt="AI Chat Bot">
+          <img src="https://res.cloudinary.com/drax7i59f/image/upload/v1757609021/robot_eicge5.png" alt="AI Chat Bot">
         </div>
         <div class="sidebar-item" onclick="openUsketch()">
           <img src="https://res.cloudinary.com/drax7i59f/image/upload/v1756746723/flowchart_sjynye.png" alt="PDF Analyser">
@@ -191,21 +259,13 @@
         <button class="toggle-theme" onclick="toggleTheme()">Theme</button>
       </div>
     </div>
-
     <div class="main-content">
       <div class="header">
         <h1>U Connect - Student Dashboard</h1>
-<a href="resivenotification.html" title="View Notifications">
-  <img 
-    src="https://res.cloudinary.com/drax7i59f/image/upload/v1754331496/notification-bell_ucc2sm.png" 
-    alt="Notifications" 
-    style="width:28px; height:28px; vertical-align:middle; cursor:pointer; margin-left:24px;"
-
-  />
-</a>
-
-        <input type="text" placeholder="Search..." style="padding: 10px; border-radius: 10px; border: 1px solid #ccc;">
-        
+        <a href="resivenotification.html" title="View Notifications">
+          <img src="https://res.cloudinary.com/drax7i59f/image/upload/v1754331496/notification-bell_ucc2sm.png" alt="Notifications" style="width:28px; height:28px; vertical-align:middle; cursor:pointer; margin-left:24px;"/>
+        </a>
+        <input type="text" placeholder="Search...">
       </div>
       <div class="cards-container">
         <div class="card" onclick="openChatBot()">
@@ -213,90 +273,57 @@
           <h2>UniTalk</h2>
           <p>Get instant help from the AI-powered assistant for study, doubts, or FAQs.</p>
         </div>
-
         <div class="card" onclick="openUsketch()">
           <img src="https://i.pinimg.com/736x/f2/28/6a/f2286aac4feb768ce4e71e35b6d9bf82.jpg" alt="PDF Analyser">
           <h2>UniSketch</h2>
           <p>Sketch any subject into a chart easily to visualize complex concepts.</p>
         </div>
-
         <div class="card" onclick="openCareerRoadmap()">
           <img src="https://i.pinimg.com/1200x/5c/09/78/5c09785b0db777096eadbf4e354d9a5e.jpg" alt="Career Roadmap">
           <h2>Career Roadmap</h2>
           <p>Visual roadmap and career guidance for your future goals.</p>
         </div>
-
         <div class="card" onclick="openFeesDetails()">
           <img src="https://i.pinimg.com/1200x/51/ae/9d/51ae9d42ba88507b52784c598aaf0c0b.jpg" alt="Fees">
           <h2>Fees Details</h2>
           <p>Check your current fee balance, payment history, and due alerts.</p>
         </div>
-        <!-- Add these four cards after your existing ones -->
-
-<div class="card" onclick="notes()">
-  <img src="https://i.pinimg.com/1200x/2e/d0/37/2ed037bdea2e0af0a5a0bc95ee8f5252.jpg" alt="Notes" />
-  <h3>Notes/Time Tables/Pre Exam Papers</h3>
-  <p>Access and organize all your classroom notes, time tables, and pre-exam papers easily.</p>
-</div>
-
-<div class="card" onclick="openNotificationPage()">
-  <img src="https://i.pinimg.com/736x/94/84/1e/94841e4bd098959bf7173166f7e67495.jpg" alt="Time Tables" />
-  <h3>Notifications</h3>
-  <p>Stay updated with the latest announcements and alerts.</p>
-</div>
-
-<div class="card" onclick="openResultPage()">
-  <img src="https://res.cloudinary.com/drax7i59f/image/upload/v1756398411/Results_wbqgj6.png" alt="Results" />
-  <h3>Results</h3>
-  <p>View and download your academic results and transcripts.</p>
-</div>
-
-<div class="card" onclick="openDownloadsPage()">
-  <img src="https://res.cloudinary.com/drax7i59f/image/upload/v1756413184/638386035baa03f7b2132090383ea92d_psa13g.jpg" alt="Practical Knowledge Hub" />
-  <h3>Practical Knowledge Hub</h3>
-  <p>Access a wealth of resources, tutorials, and tools to enhance your learning experience.</p>
-</div>
+        <div class="card" onclick="notes()">
+          <img src="https://i.pinimg.com/1200x/2e/d0/37/2ed037bdea2e0af0a5a0bc95ee8f5252.jpg" alt="Notes" />
+          <h3>Notes/Time Tables/Pre Exam Papers</h3>
+          <p>Access and organize all your classroom notes, time tables, and pre-exam papers easily.</p>
+        </div>
+        <div class="card" onclick="openNotificationPage()">
+          <img src="https://i.pinimg.com/736x/94/84/1e/94841e4bd098959bf7173166f7e67495.jpg" alt="Time Tables" />
+          <h3>Notifications</h3>
+          <p>Stay updated with the latest announcements and alerts.</p>
+        </div>
+        <div class="card" onclick="openResultPage()">
+          <img src="https://res.cloudinary.com/drax7i59f/image/upload/v1756398411/Results_wbqgj6.png" alt="Results" />
+          <h3>Results</h3>
+          <p>View and download your academic results and transcripts.</p>
+        </div>
+        <div class="card" onclick="openDownloadsPage()">
+          <img src="https://res.cloudinary.com/drax7i59f/image/upload/v1756413184/638386035baa03f7b2132090383ea92d_psa13g.jpg" alt="Practical Knowledge Hub" />
+          <h3>Practical Knowledge Hub</h3>
+          <p>Access a wealth of resources, tutorials, and tools to enhance your learning experience.</p>
+        </div>
       </div>
     </div>
   </div>
- 
   <script>
-    function toggleTheme() {
-      document.body.classList.toggle('dark-mode');
-    }
-
-    function openChatBot() {
-      window.location.href = "chat.html";
-    }
-
-    function openUsketch() {
-      window.location.href = "sketch.html";
-    }
-
-    function openCareerRoadmap() {
-          window.location.href = "career.html";
-    }
-
-    function openFeesDetails() {
-      window.location.href = "fees2.html";
-    }
-    function notes() {
-      window.location.href = "Notesview.html";
-    }
-    function openNotificationPage() {
-      window.location.href = "resivenotification.html";
-    }
-    function openResultPage() {
-      window.location.href = "resultsview.html";
-    }
-    function openDownloadsPage() {
-      window.location.href = "labs.html";
-    }
-
+    function toggleTheme() {document.body.classList.toggle('dark-mode');}
+    function openChatBot() {window.location.href = "chat.html";}
+    function openUsketch() {window.location.href = "sketch.html";}
+    function openCareerRoadmap() {window.location.href = "career.html";}
+    function openFeesDetails() {window.location.href = "fees2.html";}
+    function notes() {window.location.href = "Notesview.html";}
+    function openNotificationPage() {window.location.href = "resivenotification.html";}
+    function openResultPage() {window.location.href = "resultsview.html";}
+    function openDownloadsPage() {window.location.href = "labs.html";}
   </script>
   <footer>
-    © 2025 U Connect. All rights reserved.
-  </footer>
-
+    © 2025 U Connect. All rights reserved.
+  </footer>
 </body>
 </html>
