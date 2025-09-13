@@ -8,27 +8,8 @@ dotenv.config();
 
 const app = express();
 
-// CORS setup
-const corsOptions = {
-  origin: process.env.ALLOWED_ORIGIN || '*',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  optionsSuccessStatus: 204,
-};
-app.use(cors(corsOptions));
-app.use(express.json());
-
-// Serve static files from /public
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Root route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'welcome.html'));
-});
-
-// College context for AI
-const collegeContext = {
+// UCET system context for AI
+const UCET_SYSTEM_CONTEXT = {
   role: "system",
   content: `You are UniTalk, a helpful AI assistant for Universal College of Engineering and Technology (UCET), Guntur.
 
@@ -194,33 +175,69 @@ MISSION:
 Always answer student queries based on this information. If not found, say: "Sorry, I don't have that information yet."`
 };
 
-// Chat endpoint
-app.post('/chat', async (req, res) => {
-  try {
-    const { messages, model } = req.body;
-    const fullMessages = [collegeContext, ...messages];
+// --- Middleware setup ---
+const corsOptions = {
+  origin: process.env.ALLOWED_ORIGIN || true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 204,
+};
+app.use(cors(corsOptions));
+app.use(express.json());
 
-    const response = await axios.post(
-      'https://openrouter.ai/api/v1/chat/completions',
-      { model, messages: fullMessages },
+// Serve static files from /public
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve welcome.html at root
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'welcome.html'));
+});
+
+// Serve chat.html at /chat-ui
+app.get('/chat-ui', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'chat.html'));
+});
+
+// POST /chat endpoint (OpenAI Chat API)
+app.post('/chat', async (req, res) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] Incoming /chat request:`, JSON.stringify(req.body, null, 2));
+  try {
+    const { messages = [], model = 'gpt-3.5-turbo' } = req.body;
+
+    // Prepend UCET context only once at the start of user conversation
+    const contextPrependedMessages = [
+      UCET_SYSTEM_CONTEXT,
+      ...messages
+    ];
+
+    const openaiResponse = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model,
+        messages: contextPrependedMessages,
+      },
       {
         headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
         },
       }
     );
 
-    res.json(response.data);
+    res.json(openaiResponse.data);
   } catch (error) {
-    console.error("Chat API error:", error.message);
+    console.error(`[${timestamp}] Chat API error:`, error?.response?.data || error.message);
     res.status(500).json({
       error: 'Something went wrong',
-      details: error.message,
+      details: error?.response?.data || error.message,
     });
   }
 });
 
-// Dynamic port
+// Dynamic port for Render
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});
