@@ -213,18 +213,21 @@ app.post('/chat', async (req, res) => {
     ];
 
     const openaiResponse = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model,
-        messages: contextPrependedMessages,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-      }
-    );
+  "https://openrouter.ai/api/v1/chat/completions",
+  {
+    model,
+    messages: contextPrependedMessages,
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://uconnect-v86n.onrender.com/", 
+      "X-Title": "UniTalk", 
+    },
+  }
+);
+
 
     res.json(openaiResponse.data);
   } catch (error) {
