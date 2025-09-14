@@ -3,7 +3,6 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
-const admin = require("firebase-admin");
 
 
 dotenv.config();
@@ -187,17 +186,6 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json());
-
-const serviceAccount = require(process.env.GOOGLE_APPLICATION_CREDENTIALS);
-
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  storageBucket: "gs://st-fees.firebasestorage.app" // 👈 replace with your Firebase bucket name
-});
-
-const db = admin.firestore();   // Firestore DB
-const bucket = admin.storage().bucket();
 
 // Serve static files from /public
 app.use(express.static(path.join(__dirname, 'public')));
