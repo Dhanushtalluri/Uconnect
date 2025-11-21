@@ -1,15 +1,17 @@
+// server.js — OpenAI integration (CommonJS)
+// Replace your current /chat handler with this whole file if you want a clean swap.
+
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const axios = require('axios');
 const path = require('path');
-
+const OpenAI = require('openai');
 
 dotenv.config();
 
 const app = express();
 
-// UCET system context for AI
+// UCET system context for AI (kept as you provided; shortened for safety)
 const UCET_SYSTEM_CONTEXT = {
   role: "system",
   content: `You are UniTalk, a helpful AI assistant for Universal College of Engineering and Technology (UCET), Guntur.
@@ -173,10 +175,10 @@ MISSION:
 - Support industry-institute collaboration and soft skills
 - Prepare students for real-world technological challenges
 
-Always answer student queries based on this information. If not found, say: "Sorry, I don't have that information yet."`
+Always answer student queries based on this information. If not found, say: "Sorry, I don't have that information yet.`
 };
 
-// --- Middleware setup ---
+// --- Middleware ---
 const corsOptions = {
   origin: process.env.ALLOWED_ORIGIN || true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -190,57 +192,78 @@ app.use(express.json());
 // Serve static files from /public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve welcome.html at root
+// Serve welcome.html and chat UI
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'welcome.html'));
 });
-
-// Serve chat.html at /chat-ui
 app.get('/chat-ui', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chat.html'));
 });
+
+// --- OpenAI client init ---
+if (!process.env.OPENAI_API_KEY) {
+  console.warn('WARNING: OPENAI_API_KEY is not set. Set it in .env or your environment before running.');
+}
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Helper: returns assistant text if available
+function extractAssistantText(openaiResp) {
+  try {
+    return openaiResp?.choices?.[0]?.message?.content
+      || openaiResp?.choices?.[0]?.text
+      || null;
+  } catch (e) {
+    return null;
+  }
+}
 
 // POST /chat endpoint (OpenAI Chat API)
 app.post('/chat', async (req, res) => {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] Incoming /chat request:`, JSON.stringify(req.body, null, 2));
-  try {
-    const { messages = [], model = 'gpt-3.5-turbo' } = req.body;
 
-    // Prepend UCET context only once at the start of user conversation
+  try {
+    const { messages = [], model = 'gpt-3.5-turbo', max_tokens = 512, temperature = 0.2 } = req.body;
+
+    // Prepend UCET system context
     const contextPrependedMessages = [
       UCET_SYSTEM_CONTEXT,
       ...messages
     ];
 
-    const openaiResponse = await axios.post(
-  "https://openrouter.ai/api/v1/chat/completions",
-  {
-    model,
-    messages: contextPrependedMessages,
-  },
-  {
-    headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "https://uconnect-v86n.onrender.com/", 
-      "X-Title": "UniTalk", 
-    },
-  }
-);
+    // Create chat completion
+    const completion = await client.chat.completions.create({
+      model,
+      messages: contextPrependedMessages,
+      max_tokens,
+      temperature
+    });
 
-
-    res.json(openaiResponse.data);
+    // Send full completion, but also include a convenience field `assistant` with raw text
+    const assistantText = extractAssistantText(completion);
+    res.json({
+      raw: completion,
+      assistant: assistantText
+    });
   } catch (error) {
-    console.error(`[${timestamp}] Chat API error:`, error?.response?.data || error.message);
-    res.status(500).json({
-      error: 'Something went wrong',
-      details: error?.response?.data || error.message,
+    console.error(`[${timestamp}] Chat API error:`, error?.response || error?.message || error);
+    const status = (error?.statusCode) || (error?.response?.status) || 500;
+    res.status(status).json({
+      error: 'Something went wrong with OpenAI call',
+      details: error?.response?.data || error?.message || error
     });
   }
 });
 
-// Dynamic port for Render
+// Small test route to verify env var is loaded
+app.get('/test-key', (req, res) => {
+  const val = process.env.OPENAI_API_KEY || '';
+  res.json({
+    OPENAI_API_KEY: val ? (val.slice(0,6) + '...') : 'NO'
+  });
+});
+
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
