@@ -54,6 +54,72 @@
       padding-top: 4px;
       padding-bottom: 4px;
     }
+
+    /* SmartSheet Agent Highlight */
+    .ss-agent-hero {
+      background: linear-gradient(91deg,#7baaff22,#eaf2ff,#bbcfff33);
+      border-radius: 20px;
+      padding: 32px 20px 22px 40px;
+      box-shadow: 0 6px 45px #4254fa28, 0 2px 8px #c3d5fe33;
+      margin-bottom: 36px;
+      margin-top: 28px;
+      max-width: 1100px;
+      margin-left: auto; margin-right: auto;
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      min-height: 88px;
+      transition: box-shadow 0.1s;
+    }
+    .ss-agent-hero:hover {
+      box-shadow: 0 10px 60px #384fe828, 0 8px 30px #bad4ff22;
+      border: 2.5px solid var(--accent);
+    }
+    .ss-agent-label {
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.96em;
+      font-weight: 700;
+      padding: 3px 14px 3px 14px;
+      border-radius: 11px;
+      letter-spacing: 1.1px;
+      position: absolute;
+      left: 22px;
+      top: -15px;
+      box-shadow: 0 2px 7px #b9c9ff45;
+      font-family: 'Montserrat',sans-serif;
+      z-index: 7;
+      text-transform: uppercase;
+    }
+    .ss-agent-name {
+      font-size: 1.55rem;
+      font-weight: bold;
+      color: #283cff;
+      letter-spacing: 1.4px;
+      margin-bottom: 2px;
+      font-family: 'Montserrat',sans-serif;
+    }
+    .ss-agent-beta {
+      background: #fd9e3e;
+      color: #fff;
+      font-size: 0.93em;
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 2px 10px;
+      margin-left: 13px;
+      letter-spacing: 0.5px;
+      font-family: 'Montserrat',sans-serif;
+      vertical-align: 3px;
+    }
+    .ss-agent-desc {
+      color: #233144;
+      font-size: 1.04em;
+      margin-top: 7px;
+      font-weight: 500;
+      letter-spacing: .07em;
+      font-family: 'Montserrat',sans-serif;
+    }
+
     .cards-wrap {
       max-width: 1200px;
       margin: 38px auto 0 auto;
@@ -130,12 +196,17 @@
       .logo-title {font-size:1rem;}
       .cards-wrap {gap:20px;}
       .navbar .logo img {width:40px;height:40px;}
+      .ss-agent-hero {
+        flex-direction:column; min-height:inherit; padding:18px 13px 18px 12px;
+      }
     }
     @media (max-width:440px){
       .navbar {flex-direction:column;align-items:flex-start;}
       .logo {padding:9px;}
       .cards-wrap {grid-template-columns:1fr; gap:15px;}
       .dashboard-title {padding:8px 0;}
+      .ss-agent-hero {margin-bottom:18px;margin-top:14px;}
+      .ss-agent-label {left:10px;top:-12px;}
     }
   </style>
 </head>
@@ -150,6 +221,18 @@
     <span class="dashboard-title">Teacher Dashboard</span>
   </nav>
 
+  <!-- SmartSheet Agent Highlighted Rectangle -->
+  <div class="ss-agent-hero" onclick="ssagent()">
+    <span class="ss-agent-label">New Tool</span>
+    <div>
+      <span class="ss-agent-name">
+        SmartSheet Agent
+        <span class="ss-agent-beta">Beta</span>
+      </span>
+      <div class="ss-agent-desc">Your automated path from PDF to organized marks</div>
+    </div>
+  </div>
+
   <!-- Animated Cards Homepage -->
   <section class="cards-wrap">
     <div class="card" onclick="fees()">
@@ -157,8 +240,6 @@
       <h2>Fees Verifier</h2>
       <p>Scan receipt QR or enter receipt ID to quickly validate student payments.</p>
       <img class="card-img" src="https://i.pinimg.com/1200x/af/62/d6/af62d642f9546f55a108d28d17c59ef8.jpg" alt="Verify">
-    
-
     </div>
     <div class="card" onclick="UploadNotesAssignments()">
       <div class="iconbg"><span class="material-symbols-outlined">upload_file</span></div>
@@ -190,7 +271,6 @@
       <p>Create and manage weekly coding challenges for students.</p>
       <img class="card-img" src="https://i.pinimg.com/736x/9b/e8/94/9be894044c48c9aae9a07f4186cb6472.jpg" alt="Announce">
     </div>
-   
   </section>
 
   <script>
@@ -216,7 +296,9 @@
     function openresultAnalyzer() {
        window.location.href = "resultanalyze.html";
     }
-
+    function ssagent() {
+       window.location.href = "https://opal.google/?flow=drive:/17YTCzSs3swIOyT_grSD1T8LpWFoSc8Ix&shared&mode=app ";
+    }
   </script>
 </body>
 </html>
